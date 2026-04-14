@@ -1,0 +1,47 @@
+services:
+  frontend:
+    build:
+      context: frontend
+      target: development
+    stdin_open: true
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    restart: always
+    networks:
+      - angular-express
+    depends_on:
+      - backend
+      
+  backend:
+    restart: always
+    build:
+      context: backend
+      target: development
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - mongo
+    networks:
+      - express-mongo
+      - angular-express
+    expose: 
+      - 8080
+  mongo:
+    restart: always
+    image: mongo:4.2.0
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - express-mongo
+    expose:
+      - 27017
+networks:
+  angular-express:
+  express-mongo:
+
+volumes:
+  mongo_data:

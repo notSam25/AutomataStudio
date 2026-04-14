@@ -1,0 +1,21 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "docker starter with node js and mongodb services",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "format": "prettier --write {**/,}*.js",
+    "lint": "prettier --check {**/,}*.js",
+    "dev": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1",
+    "mongodb": "^7.1.1",
+    "mongoose": "^9.4.1",
+    "nodemon": "^3.1.14",
+    "prettier": "^3.8.2"
+  }
+}

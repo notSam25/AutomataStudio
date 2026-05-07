@@ -1,5 +1,5 @@
-const Automata = require('../models/Automata');
-const Simulation = require('../models/Simulation');
+const Automata = require("../models/Automata");
+const Simulation = require("../models/Simulation");
 
 // Simulate automata with input string
 exports.simulateAutomata = async (req, res) => {
@@ -7,12 +7,12 @@ exports.simulateAutomata = async (req, res) => {
     const { automataId, input } = req.body;
 
     if (!automataId || input === undefined) {
-      return res.status(400).json({ error: 'Missing automataId or input' });
+      return res.status(400).json({ error: "Missing automataId or input" });
     }
 
     const automata = await Automata.findById(automataId);
     if (!automata) {
-      return res.status(404).json({ error: 'Automata not found' });
+      return res.status(404).json({ error: "Automata not found" });
     }
 
     // Simple DFA/NFA simulation (NFA handled as DFA for simplicity)
@@ -20,20 +20,20 @@ exports.simulateAutomata = async (req, res) => {
     const steps = [];
     let accepted = false;
 
-    const symbols = input.split('');
+    const symbols = input.split("");
 
     // Add initial state as first step
     steps.push({
       state: currentState,
       symbol: null,
-      stackContent: '',
+      stackContent: "",
       tapePosition: 0,
     });
 
     for (let symbol of symbols) {
       // Find transition
       const transition = automata.transitions.find(
-        (t) => t.from === currentState && t.symbol === symbol
+        (t) => t.from === currentState && t.symbol === symbol,
       );
 
       if (!transition) {
@@ -41,7 +41,7 @@ exports.simulateAutomata = async (req, res) => {
         steps.push({
           state: currentState,
           symbol: symbol,
-          stackContent: '',
+          stackContent: "",
           tapePosition: 0,
           rejected: true,
         });
@@ -52,7 +52,7 @@ exports.simulateAutomata = async (req, res) => {
       steps.push({
         state: currentState,
         symbol: symbol,
-        stackContent: '',
+        stackContent: "",
         tapePosition: 0,
       });
     }
@@ -100,7 +100,7 @@ exports.getSimulationById = async (req, res) => {
     const simulation = await Simulation.findById(id);
 
     if (!simulation) {
-      return res.status(404).json({ error: 'Simulation not found' });
+      return res.status(404).json({ error: "Simulation not found" });
     }
 
     res.status(200).json(simulation);

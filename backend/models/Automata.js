@@ -1,27 +1,30 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const transitionSchema = new mongoose.Schema({
-  from: {
-    type: String,
-    required: true,
+const transitionSchema = new mongoose.Schema(
+  {
+    from: {
+      type: String,
+      required: true,
+    },
+    to: {
+      type: String,
+      required: true,
+    },
+    symbol: {
+      type: String,
+      required: true,
+    },
+    stackSymbol: {
+      type: String,
+      default: null, // For PDA
+    },
+    pushSymbol: {
+      type: String,
+      default: null, // For PDA
+    },
   },
-  to: {
-    type: String,
-    required: true,
-  },
-  symbol: {
-    type: String,
-    required: true,
-  },
-  stackSymbol: {
-    type: String,
-    default: null, // For PDA
-  },
-  pushSymbol: {
-    type: String,
-    default: null, // For PDA
-  },
-}, { _id: false });
+  { _id: false },
+);
 
 const automataSchema = new mongoose.Schema(
   {
@@ -32,7 +35,7 @@ const automataSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['DFA', 'NFA', 'PDA', 'TURING'],
+      enum: ["DFA", "NFA", "PDA", "TURING"],
       required: true,
     },
     states: {
@@ -58,7 +61,7 @@ const automataSchema = new mongoose.Schema(
     },
     initialStackSymbol: {
       type: String,
-      default: 'Z', // For PDA
+      default: "Z", // For PDA
     },
     tape: {
       type: String,
@@ -66,12 +69,12 @@ const automataSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      default: '',
+      default: "",
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-module.exports = mongoose.model('Automata', automataSchema);
+module.exports = mongoose.model("Automata", automataSchema);

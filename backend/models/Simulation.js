@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const simulationSchema = new mongoose.Schema(
   {
     automataId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Automata',
+      ref: "Automata",
       required: true,
     },
     input: {
@@ -30,7 +30,7 @@ const simulationSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-module.exports = mongoose.model('Simulation', simulationSchema);
+module.exports = mongoose.model("Simulation", simulationSchema);

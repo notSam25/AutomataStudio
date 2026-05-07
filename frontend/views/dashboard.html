@@ -20,7 +20,9 @@
     <div ng-show="automata.length === 0 && !loading" class="empty-state">
       <h3>No automata found</h3>
       <p>Get started by creating your first automata!</p>
-      <button class="btn btn-primary" ng-click="createNew()">Create Automata</button>
+      <button class="btn btn-primary" ng-click="createNew()">
+        Create Automata
+      </button>
     </div>
 
     <div ng-show="automata.length > 0">
@@ -42,13 +44,22 @@
               <td>{{ a.states.length }}</td>
               <td>{{ a.alphabet.join(', ') }}</td>
               <td>
-                <button class="btn btn-primary btn-sm" ng-click="viewAutomata(a._id)">
+                <button
+                  class="btn btn-primary btn-sm"
+                  ng-click="viewAutomata(a._id)"
+                >
                   Simulate
                 </button>
-                <button class="btn btn-secondary btn-sm" ng-click="editAutomata(a._id)">
+                <button
+                  class="btn btn-secondary btn-sm"
+                  ng-click="editAutomata(a._id)"
+                >
                   Edit
                 </button>
-                <button class="btn btn-danger btn-sm" ng-click="deleteAutomata(a._id, a.name)">
+                <button
+                  class="btn btn-danger btn-sm"
+                  ng-click="deleteAutomata(a._id, a.name)"
+                >
                   Delete
                 </button>
               </td>

@@ -1,0 +1,124 @@
+<div class="container">
+  <div class="card">
+    <div class="card-header">
+      <h2>Simulate Automata</h2>
+    </div>
+
+    <div ng-show="loading" class="loading">
+      <p>Loading automata...</p>
+    </div>
+
+    <div ng-show="!loading">
+      <div class="alert alert-error show" ng-show="error">{{ error }}</div>
+
+      <div class="card">
+        <h3>{{ automata.name }}</h3>
+        <p><strong>Type:</strong> {{ automata.type }}</p>
+        <p><strong>Description:</strong> {{ automata.description }}</p>
+        <p><strong>States:</strong> {{ automata.states.join(', ') }}</p>
+        <p><strong>Alphabet:</strong> {{ automata.alphabet.join(', ') }}</p>
+        <p><strong>Accept States:</strong> {{ automata.acceptStates.join(', ') }}</p>
+      </div>
+
+      <div class="card">
+        <h3>Visual Representation</h3>
+        <div automata-graph automata="automata" active-step="activeStep"></div>
+        <div class="graph-legend">
+          <span class="legend-item"><span class="legend-dot accept"></span> Accept state</span>
+          <span class="legend-item"><span class="legend-dot initial"></span> Initial state</span>
+          <span class="legend-item"><span class="legend-dot active"></span> Current state</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Run Simulation</h3>
+        <div class="form-group">
+          <label for="input">Input String</label>
+          <input type="text" id="input" ng-model="input" placeholder="e.g., 010101" />
+        </div>
+        <button class="btn btn-success" ng-click="simulate()" ng-disabled="simulating">
+          {{ simulating ? 'Simulating...' : 'Simulate' }}
+        </button>
+      </div>
+
+      <div ng-show="result" class="card">
+        <h3>Animation Controls</h3>
+        <div class="animation-controls">
+          <button class="btn btn-primary" ng-click="stepBackward()" ng-disabled="currentStepIndex <= 0">
+            ⏮ Previous
+          </button>
+          <button class="btn btn-success" ng-click="playAnimation()" ng-disabled="isAnimating || currentStepIndex >= result.steps.length - 1">
+            ▶ Play
+          </button>
+          <button class="btn btn-warning" ng-click="pauseAnimation()" ng-disabled="!isAnimating">
+            ⏸ Pause
+          </button>
+          <button class="btn btn-primary" ng-click="stepForward()" ng-disabled="currentStepIndex >= result.steps.length - 1">
+            Next ⏭
+          </button>
+          <span class="step-indicator">Step {{ currentStepIndex + 1 }} / {{ result.steps.length }}</span>
+        </div>
+      </div>
+
+      <div ng-show="result" class="card">
+        <h3>Simulation Result</h3>
+        <div class="result" ng-class="getResultClass()">
+          {{ getResultMessage() }}
+        </div>
+
+        <p><strong>Input:</strong> {{ result.input }}</p>
+        <p><strong>Final State:</strong> {{ result.finalState }}</p>
+
+        <h4>Current State: {{ activeStep.state }}</h4>
+        <p ng-show="activeStep.symbol"><strong>Last Symbol:</strong> {{ activeStep.symbol }}</p>
+
+        <h4>Execution Trace (All Steps):</h4>
+        <table ng-show="result.steps.length > 0">
+          <thead>
+            <tr>
+              <th>Step #</th>
+              <th>State</th>
+              <th>Symbol</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="step in result.steps track by $index" ng-class="{ 'highlight': $index === currentStepIndex }">
+              <td>{{ $index }}</td>
+              <td>{{ step.state }}</td>
+              <td>{{ step.symbol || '(start)' }}</td>
+              <td ng-show="$index === currentStepIndex" style="color: #e74c3c; font-weight: bold;">◀ Current</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div ng-show="history.length > 0" class="card">
+        <h3>Simulation History</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Input</th>
+              <th>Result</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="sim in history | orderBy:'-createdAt'">
+              <td>{{ sim.input }}</td>
+              <td>
+                <span ng-show="sim.accepted" class="badge badge-success">ACCEPTED</span>
+                <span ng-show="!sim.accepted" class="badge badge-danger">REJECTED</span>
+              </td>
+              <td>{{ sim.createdAt | date:'short' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="form-group">
+        <a href="#!/" class="btn btn-secondary">Back to Dashboard</a>
+      </div>
+    </div>
+  </div>
+</div>

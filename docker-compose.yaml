@@ -28,8 +28,8 @@ services:
     networks:
       - express-mongo
       - angular-express
-    expose: 
-      - 8080
+    ports:
+      - "127.0.0.1:5000:8080"
   mongo:
     restart: always
     image: mongo:4.2.0

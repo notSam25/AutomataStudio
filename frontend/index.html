@@ -1,20 +1,42 @@
 <!doctype html>
-<html ng-app="test" lang="en">
+<html ng-app="automataApp" lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>AutomataStudio</title>
+    
+    <!-- Angular and ngRoute -->
     <script src="./node_modules/angular/angular.min.js"></script>
-    <script>
-      angular.module("test", []);
-    </script>
+    <script src="./node_modules/angular-route/angular-route.min.js"></script>
+    <!-- Vis.js graph library -->
+    <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="./js/app.js"></script>
+    <script src="./js/services/automataService.js"></script>
+    <script src="./js/directives/automataGraph.js"></script>
+    <script src="./js/directives/automataGraphEditor.js"></script>
+    <script src="./js/controllers/dashboardController.js"></script>
+    <script src="./js/controllers/createController.js"></script>
+    <script src="./js/controllers/editController.js"></script>
+    <script src="./js/controllers/simulateController.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="./css/style.css" />
   </head>
   <body>
-    <div>
-      <label>Name:</label>
-      <input type="text" ng-model="yourName" placeholder="Enter a name here" />
-      <hr />
-      <h1>Hello {{yourName}}!</h1>
-    </div>
+    <header>
+      <h1>⚙️ AutomataStudio</h1>
+      <p>Build and Simulate Automata</p>
+    </header>
+
+    <nav>
+      <a href="#!/">Dashboard</a>
+      <a href="#!/create">Create Automata</a>
+    </nav>
+
+    <!-- Main content area -->
+    <div ng-view></div>
   </body>
 </html>
+

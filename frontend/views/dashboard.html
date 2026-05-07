@@ -1,0 +1,61 @@
+<div class="container">
+  <div class="alert alert-error show" ng-show="error">{{ error }}</div>
+
+  <div ng-show="loading" class="loading">
+    <p>Loading automata...</p>
+  </div>
+
+  <div ng-show="!loading">
+    <div class="card">
+      <div class="card-header">
+        <h2>Automata Studio Dashboard</h2>
+        <p>Create, manage, and simulate your automata</p>
+      </div>
+
+      <button class="btn btn-success" ng-click="createNew()">
+        + Create New Automata
+      </button>
+    </div>
+
+    <div ng-show="automata.length === 0 && !loading" class="empty-state">
+      <h3>No automata found</h3>
+      <p>Get started by creating your first automata!</p>
+      <button class="btn btn-primary" ng-click="createNew()">Create Automata</button>
+    </div>
+
+    <div ng-show="automata.length > 0">
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>States</th>
+              <th>Alphabet</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="a in automata">
+              <td>{{ a.name }}</td>
+              <td><span class="badge badge-primary">{{ a.type }}</span></td>
+              <td>{{ a.states.length }}</td>
+              <td>{{ a.alphabet.join(', ') }}</td>
+              <td>
+                <button class="btn btn-primary btn-sm" ng-click="viewAutomata(a._id)">
+                  Simulate
+                </button>
+                <button class="btn btn-secondary btn-sm" ng-click="editAutomata(a._id)">
+                  Edit
+                </button>
+                <button class="btn btn-danger btn-sm" ng-click="deleteAutomata(a._id, a.name)">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
+    "seed": "node seed.js",
     "format": "prettier --write {**/,}*.js",
     "lint": "prettier --check {**/,}*.js",
     "dev": "nodemon server.js"

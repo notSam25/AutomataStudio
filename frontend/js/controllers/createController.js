@@ -2,7 +2,12 @@ angular
   .module("automataApp")
   .controller(
     "CreateController",
-    function ($scope, $location, AutomataService) {
+    function ($scope, $location, AutomataService, AuthService) {
+      if (!AuthService.isAuthenticated()) {
+        $location.path("/login");
+        return;
+      }
+
       $scope.automata = {
         name: "",
         type: "DFA",
@@ -55,7 +60,7 @@ angular
         function (newStates) {
           if (newStates) {
             newStates.forEach((state) => {
-              const stateName = state.name || state.id;
+              const stateName = state.name || state.id || state;
               if ($scope.automata.acceptStates.includes(stateName)) {
                 $scope.acceptStateMap[stateName] = true;
               }
@@ -67,21 +72,24 @@ angular
 
       // Add state to list
       $scope.addState = function () {
-        if (
-          $scope.stateInput &&
-          !$scope.automata.states.includes($scope.stateInput)
-        ) {
-          $scope.automata.states.push($scope.stateInput);
+        const stateName = ($scope.stateInput || "").trim();
+        const exists = $scope.automata.states.some(
+          (s) => (s.name || s.id) === stateName,
+        );
+
+        if (stateName && !exists) {
+          $scope.automata.states.push({ id: stateName, name: stateName });
           $scope.stateInput = "";
-        } else if ($scope.automata.states.includes($scope.stateInput)) {
+        } else if (exists) {
           $scope.error = "State already exists";
         }
       };
 
       // Remove state
       $scope.removeState = function (state) {
+        const stateName = state.name || state.id || state;
         $scope.automata.states = $scope.automata.states.filter(
-          (s) => s !== state,
+          (s) => (s.name || s.id) !== stateName,
         );
       };
 
@@ -136,12 +144,13 @@ angular
 
       // Add accept state
       $scope.toggleAcceptState = function (state) {
-        if ($scope.automata.acceptStates.includes(state)) {
+        const stateName = state.name || state.id || state;
+        if ($scope.automata.acceptStates.includes(stateName)) {
           $scope.automata.acceptStates = $scope.automata.acceptStates.filter(
-            (s) => s !== state,
+            (s) => s !== stateName,
           );
         } else {
-          $scope.automata.acceptStates.push(state);
+          $scope.automata.acceptStates.push(stateName);
         }
       };
 

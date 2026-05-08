@@ -1,6 +1,26 @@
 const Automata = require("../models/Automata");
 const Simulation = require("../models/Simulation");
 
+const canAccessAutomata = (automata, user) => {
+  if (!automata) {
+    return false;
+  }
+
+  if (automata.isPublic) {
+    return true;
+  }
+
+  if (!automata.ownerId) {
+    return true;
+  }
+
+  if (!user || !automata.ownerId) {
+    return false;
+  }
+
+  return String(automata.ownerId) === String(user._id);
+};
+
 // Simulate automata with input string
 exports.simulateAutomata = async (req, res) => {
   try {
@@ -11,7 +31,7 @@ exports.simulateAutomata = async (req, res) => {
     }
 
     const automata = await Automata.findById(automataId);
-    if (!automata) {
+    if (!canAccessAutomata(automata, req.user)) {
       return res.status(404).json({ error: "Automata not found" });
     }
 
@@ -70,6 +90,7 @@ exports.simulateAutomata = async (req, res) => {
 
     const savedSimulation = await simulation.save();
     res.status(201).json({
+      input,
       accepted,
       finalState: currentState,
       steps,
@@ -84,6 +105,10 @@ exports.simulateAutomata = async (req, res) => {
 exports.getSimulationHistory = async (req, res) => {
   try {
     const { automataId } = req.params;
+    const automata = await Automata.findById(automataId);
+    if (!canAccessAutomata(automata, req.user)) {
+      return res.status(404).json({ error: "Automata not found" });
+    }
 
     const simulations = await Simulation.find({ automataId });
 
@@ -100,6 +125,11 @@ exports.getSimulationById = async (req, res) => {
     const simulation = await Simulation.findById(id);
 
     if (!simulation) {
+      return res.status(404).json({ error: "Simulation not found" });
+    }
+
+    const automata = await Automata.findById(simulation.automataId);
+    if (!canAccessAutomata(automata, req.user)) {
       return res.status(404).json({ error: "Simulation not found" });
     }
 

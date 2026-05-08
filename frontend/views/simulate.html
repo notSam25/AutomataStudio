@@ -66,28 +66,28 @@
             ng-click="stepBackward()"
             ng-disabled="currentStepIndex <= 0"
           >
-            ⏮ Previous
+            Previous
           </button>
           <button
             class="btn btn-success"
             ng-click="playAnimation()"
             ng-disabled="isAnimating || currentStepIndex >= result.steps.length - 1"
           >
-            ▶ Play
+            Play
           </button>
           <button
             class="btn btn-warning"
             ng-click="pauseAnimation()"
             ng-disabled="!isAnimating"
           >
-            ⏸ Pause
+            Pause
           </button>
           <button
             class="btn btn-primary"
             ng-click="stepForward()"
             ng-disabled="currentStepIndex >= result.steps.length - 1"
           >
-            Next ⏭
+            Next
           </button>
           <span class="step-indicator"
             >Step {{ currentStepIndex + 1 }} / {{ result.steps.length }}</span
@@ -98,7 +98,7 @@
       <div ng-show="result" class="card">
         <h3>Simulation Result</h3>
         <div class="result" ng-class="getResultClass()">
-          {{ getResultMessage() }}
+          {{ getResultMessage() === "ACCEPTED ✓" ? "ACCEPTED" : "REJECTED" }}
         </div>
 
         <p><strong>Input:</strong> {{ result.input }}</p>

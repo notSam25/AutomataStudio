@@ -28,6 +28,11 @@ const transitionSchema = new mongoose.Schema(
 
 const automataSchema = new mongoose.Schema(
   {
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     name: {
       type: String,
       required: true,
@@ -70,6 +75,15 @@ const automataSchema = new mongoose.Schema(
     description: {
       type: String,
       default: "",
+    },
+    isPublic: {
+      type: Boolean,
+      default: false,
+    },
+    shareId: {
+      type: String,
+      default: null,
+      index: true,
     },
   },
   {

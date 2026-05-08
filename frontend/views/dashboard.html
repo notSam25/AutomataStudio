@@ -12,6 +12,10 @@
         <p>Create, manage, and simulate your automata</p>
       </div>
 
+      <div class="alert alert-info show" ng-show="!isAuthenticated()">
+        Login to create, edit, delete, and share automata.
+      </div>
+
       <button class="btn btn-success" ng-click="createNew()">
         + Create New Automata
       </button>
@@ -53,14 +57,29 @@
                 <button
                   class="btn btn-secondary btn-sm"
                   ng-click="editAutomata(a._id)"
+                  ng-show="isAuthenticated()"
                 >
                   Edit
                 </button>
                 <button
                   class="btn btn-danger btn-sm"
                   ng-click="deleteAutomata(a._id, a.name)"
+                  ng-show="isAuthenticated()"
                 >
                   Delete
+                </button>
+                <button
+                  class="btn btn-secondary btn-sm"
+                  ng-click="shareAutomata(a._id)"
+                  ng-show="isAuthenticated()"
+                >
+                  Share
+                </button>
+                <button
+                  class="btn btn-primary btn-sm"
+                  ng-click="exportAutomata(a._id)"
+                >
+                  Export
                 </button>
               </td>
             </tr>

@@ -76,10 +76,10 @@
           <div class="list-group-item" ng-repeat="state in automata.states">
             <input
               type="checkbox"
-              ng-model="acceptStateMap[state.name || state.id]"
+              ng-model="acceptStateMap[state.name || state.id || state]"
               ng-change="updateAcceptStates()"
             />
-            <label>{{ state.name || state.id }}</label>
+            <label>{{ state.name || state.id || state }}</label>
           </div>
         </div>
       </div>
@@ -124,7 +124,7 @@
         <select
           id="initialState"
           ng-model="automata.initialState"
-          ng-options="state for state in automata.states"
+          ng-options="(state.name || state.id) as (state.name || state.id) for state in automata.states"
           required
         >
           <option value="">-- Select Initial State --</option>
@@ -137,7 +137,7 @@
           <label>From State:</label>
           <select
             ng-model="transitionFrom"
-            ng-options="state for state in automata.states"
+            ng-options="(state.name || state.id) as (state.name || state.id) for state in automata.states"
           >
             <option value="">-- Select --</option>
           </select>
@@ -146,7 +146,7 @@
           <label>To State:</label>
           <select
             ng-model="transitionTo"
-            ng-options="state for state in automata.states"
+            ng-options="(state.name || state.id) as (state.name || state.id) for state in automata.states"
           >
             <option value="">-- Select --</option>
           </select>

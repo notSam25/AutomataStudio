@@ -1,0 +1,30 @@
+<div class="container">
+  <div class="card">
+    <div class="card-header">
+      <h2>Profile</h2>
+    </div>
+
+    <div ng-show="loading" class="loading">
+      <p>Loading profile...</p>
+    </div>
+
+    <div ng-show="!loading">
+      <div class="alert alert-error show" ng-show="error">{{ error }}</div>
+      <div class="alert alert-success show" ng-show="success">{{ success }}</div>
+
+      <form ng-submit="save()">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" ng-model="form.username" required />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" ng-model="form.email" disabled />
+        </div>
+
+        <button type="submit" class="btn btn-success">Save Profile</button>
+      </form>
+    </div>
+  </div>
+</div>

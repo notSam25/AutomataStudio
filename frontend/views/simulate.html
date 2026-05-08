@@ -98,7 +98,7 @@
       <div ng-show="result" class="card">
         <h3>Simulation Result</h3>
         <div class="result" ng-class="getResultClass()">
-          {{ getResultMessage() === "ACCEPTED ✓" ? "ACCEPTED" : "REJECTED" }}
+          {{ getResultMessage() }}
         </div>
 
         <p><strong>Input:</strong> {{ result.input }}</p>

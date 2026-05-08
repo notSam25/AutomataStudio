@@ -20,6 +20,7 @@ angular
         let nodes = null;
         let edges = null;
         let nodeCounter = 0;
+        let selectedNodeId = null;
 
         //redraw network on window resize
         function onWindowResize() {
@@ -52,6 +53,7 @@ angular
         function initializeGraph() {
           //clear existing content
           elem.empty();
+          selectedNodeId = null;
           nodes = new vis.DataSet();
           edges = new vis.DataSet();
           nodeCounter = 0;
@@ -160,6 +162,11 @@ angular
             options,
           );
 
+          //freeze layout after stabilization so manual dragging stays in place
+          network.once("stabilizationIterationsDone", function () {
+            network.setOptions({ physics: false });
+          });
+
           // Explicitly set canvas size to match container
           const canvas = elem[0].querySelector("canvas");
           if (canvas) {
@@ -187,8 +194,29 @@ angular
 
         //attach user interaction handlers
         function setupEventHandlers() {
-          //click to add new state
+          //click canvas to add states or select nodes for connections
           network.on("click", function (params) {
+            if (params.nodes.length > 0) {
+              const clickedNodeId = params.nodes[0];
+
+              if (selectedNodeId && selectedNodeId !== clickedNodeId) {
+                showTransitionDialog(selectedNodeId, clickedNodeId);
+                network.unselectAll();
+                selectedNodeId = null;
+                return;
+              }
+
+              selectedNodeId = clickedNodeId;
+              network.selectNodes([clickedNodeId]);
+              return;
+            }
+
+            if (selectedNodeId) {
+              selectedNodeId = null;
+              network.unselectAll();
+              return;
+            }
+
             if (params.nodes.length === 0 && params.edges.length === 0) {
               const canvasPos = params.pointer.canvas;
               addNewState(canvasPos);
@@ -220,19 +248,6 @@ angular
             }
           });
 
-          //drag end to create transition if dropped on node
-          network.on("dragEnd", function (params) {
-            if (params.nodes.length > 0) {
-              const fromNode = params.nodes[0];
-
-              //find if dropped on another node
-              const toNode = network.getNodeAt(params.pointer.DOM);
-
-              if (toNode && fromNode !== toNode) {
-                showTransitionDialog(fromNode, toNode);
-              }
-            }
-          });
         }
 
         //add a new state node at the given position
@@ -256,11 +271,11 @@ angular
             id: stateId,
             label: stateId,
             color: {
-              background: "#3498db",
-              border: "#2c3e50",
-              highlight: { background: "#e74c3c", border: "#c0392b" },
+              background: "#1fb6ff",
+              border: "#cbd5e1",
+              highlight: { background: "#ffd27a", border: "#ffb02e" },
             },
-            font: { size: 14, color: "#fff" },
+            font: { size: 14, color: "#ffffff" },
             shape: "circle",
             mass: 2,
             x: position.x,
@@ -313,6 +328,7 @@ angular
 
         //prompt user for transition symbol and add transition
         function showTransitionDialog(fromStateId, toStateId) {
+          //prompt for label when connecting two states
           const alphabet =
             (scope.automata.alphabet || []).length > 0
               ? scope.automata.alphabet.join(", ")

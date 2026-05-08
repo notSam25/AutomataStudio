@@ -22,6 +22,8 @@ const normalizeAutomataPayload = (payload) => {
     from: normalizeStateName(t.from) || t.from,
     to: normalizeStateName(t.to) || t.to,
     symbol: t.symbol,
+    writeSymbol: t.writeSymbol || null,
+    move: t.move || null,
     stackSymbol: t.stackSymbol || null,
     pushSymbol: t.pushSymbol || null,
   }));

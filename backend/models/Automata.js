@@ -14,6 +14,14 @@ const transitionSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    writeSymbol: {
+      type: String,
+      default: null, // For Turing machines
+    },
+    move: {
+      type: String,
+      default: null, // For Turing machines
+    },
     stackSymbol: {
       type: String,
       default: null, // For PDA

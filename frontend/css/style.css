@@ -58,6 +58,14 @@ textarea {
 .card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:18px}
 .card-header{padding-bottom:10px;margin-bottom:12px}
 .card-header h2{margin:0;font-size:18px;color:var(--text)}
+.text-muted{color:var(--muted)}
+.automata-grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.automata-card{display:flex;flex-direction:column;gap:12px}
+.automata-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:0;padding-bottom:0}
+.automata-card-header h3{font-size:17px;margin-bottom:4px}
+.automata-card-header p{margin:0;font-size:14px;line-height:1.4}
+.automata-meta{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:14px}
+.action-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
 
 table {
   width: 100%;

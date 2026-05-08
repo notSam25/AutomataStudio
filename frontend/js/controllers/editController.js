@@ -182,6 +182,10 @@ angular
         );
       };
 
+      //Expose submit handler for shared form
+      $scope.submitAutomata = $scope.updateAutomata;
+      $scope.submitLabel = "Update Automata";
+
       // Cancel
       $scope.cancel = function () {
         $location.path("/");

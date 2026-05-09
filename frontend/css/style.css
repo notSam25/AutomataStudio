@@ -178,7 +178,8 @@ table tbody tr:hover {
 
 .legend-dot.accept{background:var(--success);border-color:var(--success)}
 .legend-dot.initial{background:var(--accent-2);border-color:var(--accent-2)}
-.legend-dot.active{background:var(--accent);border-color:var(--accent)}
+.legend-dot.regular{background:var(--accent);border-color:var(--accent)}
+.legend-dot.current{background:#ffd27a;border-color:#f59e0b}
 
 .animation-controls {
   display: flex;

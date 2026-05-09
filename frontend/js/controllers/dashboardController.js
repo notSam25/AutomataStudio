@@ -54,6 +54,58 @@ angular
         $location.path("/create");
       };
 
+      // Import automata from JSON file
+      $scope.importAutomata = function () {
+        if (!AuthService.isAuthenticated()) {
+          $location.path('/login');
+          return;
+        }
+
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.onchange = function (evt) {
+          const file = evt.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            try {
+              const parsed = JSON.parse(e.target.result);
+
+              // sanitize imported object
+              delete parsed._id;
+              delete parsed.createdAt;
+              delete parsed.updatedAt;
+
+              // ensure unique name
+              const existingNames = ($scope.automata || []).map((a) => a.name);
+              let baseName = parsed.name || 'Imported Automata';
+              let name = baseName;
+              let counter = 1;
+              while (existingNames.includes(name)) {
+                name = baseName + ' (copy ' + counter + ')';
+                counter++;
+              }
+              parsed.name = name;
+
+              AutomataService.createAutomata(parsed).then(
+                function (resp) {
+                  alert('Imported automata as "' + resp.data.name + '"');
+                  loadAutomata();
+                },
+                function (err) {
+                  alert('Failed to import automata: ' + (err.statusText || err.data || ''));
+                }
+              );
+            } catch (err) {
+              alert('Invalid JSON file');
+            }
+          };
+          reader.readAsText(file);
+        };
+        input.click();
+      };
+
       // Navigate to view/simulate
       $scope.viewAutomata = function (id) {
         $location.path("/simulate/" + id);
@@ -79,12 +131,13 @@ angular
           function (response) {
             const shareHash = response.data.shareUrl;
             const fullUrl = $window.location.origin + shareHash;
+            const simulateUrl = $window.location.origin + "#!/simulate/" + id;
             $window.navigator.clipboard.writeText(fullUrl).then(
               function () {
-                alert("Share link copied to clipboard:\n" + fullUrl);
+                alert("Share link copied to clipboard:\n" + fullUrl + "\n\nSimulate (direct) link:\n" + simulateUrl);
               },
               function () {
-                alert("Share link:\n" + fullUrl);
+                alert("Share link:\n" + fullUrl + "\n\nSimulate (direct) link:\n" + simulateUrl);
               },
             );
           },

@@ -19,6 +19,9 @@
       <button class="btn btn-success" ng-click="createNew()">
         + Create New Automata
       </button>
+      <button class="btn btn-secondary" ng-click="importAutomata()" ng-show="isAuthenticated()">
+        Import
+      </button>
     </div>
 
     <div ng-show="automata.length === 0 && !loading" class="empty-state">

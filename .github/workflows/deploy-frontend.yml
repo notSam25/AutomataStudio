@@ -36,6 +36,18 @@ jobs:
             npm ci --production || true
           fi
 
+      - name: Inject backend URL
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        run: |
+          if [ -n "$BACKEND_URL" ]; then
+            echo "window.__API_BASE__ = '$BACKEND_URL';" > frontend/config.js
+            echo "Injected BACKEND_URL from secrets"
+          else
+            echo "window.__API_BASE__ = 'http://localhost:5000/api';" > frontend/config.js
+            echo "No BACKEND_URL secret set; using localhost fallback"
+          fi
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 

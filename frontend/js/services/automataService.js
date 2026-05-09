@@ -1,5 +1,5 @@
 angular.module("automataApp").factory("AutomataService", function ($http, AuthService) {
-  const API_BASE = "http://localhost:5000/api";
+  const API_BASE = (window && window.__API_BASE__) ? window.__API_BASE__ : "http://localhost:5000/api";
 
   const withAuth = function () {
     return {

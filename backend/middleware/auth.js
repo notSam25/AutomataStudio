@@ -22,7 +22,9 @@ const optionalAuth = async (req, res, next) => {
       return next();
     }
 
-    const user = await User.findOne({ authToken: token }).select("_id username email");
+    const user = await User.findOne({ authToken: token }).select(
+      "_id username email",
+    );
     req.user = user || null;
     return next();
   } catch (error) {
@@ -41,7 +43,9 @@ const requireAuth = async (req, res, next) => {
       return res.status(401).json({ error: "Authentication required" });
     }
 
-    const user = await User.findOne({ authToken: token }).select("_id username email");
+    const user = await User.findOne({ authToken: token }).select(
+      "_id username email",
+    );
     if (!user) {
       return res.status(401).json({ error: "Invalid or expired token" });
     }

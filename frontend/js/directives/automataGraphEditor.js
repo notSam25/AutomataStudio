@@ -16,12 +16,32 @@ angular
       link: function (scope, elem) {
         elem.addClass("graph-editor-container");
 
+        const toolbar = angular.element('<div class="graph-editor-toolbar"></div>');
+        const resetButton = angular.element(
+          '<button type="button" class="btn btn-secondary btn-sm graph-editor-reset">Reset view</button>',
+        );
+        const graphHost = angular.element('<div class="graph-editor-canvas"></div>');
+
+        toolbar.append(resetButton);
+        elem.append(toolbar);
+        elem.append(graphHost);
+
         let network = null;
         let nodes = null;
         let edges = null;
         let nodeCounter = 0;
         let edgeCounter = 0;
         let selectedNodeId = null;
+        let graphSignature = "";
+        let transitionSignature = "";
+        let stateSignature = "";
+        let initialView = null;
+
+        resetButton.on("click", function () {
+          scope.$applyAsync(function () {
+            resetView();
+          });
+        });
 
         //redraw network on window resize
         function onWindowResize() {
@@ -53,84 +73,16 @@ angular
         //build vis network from automata model
         function initializeGraph() {
           //clear existing content
-          elem.empty();
+          graphHost.empty();
           selectedNodeId = null;
           nodes = new vis.DataSet();
           edges = new vis.DataSet();
           nodeCounter = 0;
           edgeCounter = 0;
 
-          // Add existing states as nodes
-          if (
-            scope.automata &&
-            scope.automata.states &&
-            scope.automata.states.length > 0
-          ) {
-            //add each state as a node
-            scope.automata.states.forEach((state, index) => {
-              const stateId = state.id || state.name;
-              const isAccept =
-                scope.automata.acceptStates &&
-                scope.automata.acceptStates.includes(stateId);
-              const isInitial = scope.automata.initialState === stateId;
+          syncNodesFromModel();
 
-              // theme colors (light Desmos-like)
-              let color = "#1fb6ff"; // default node
-              let font = { size: 14, color: "#ffffff" };
-
-              if (isInitial) {
-                color = "#7c3aed"; // initial state accent
-                font.color = "#ffffff";
-              }
-              if (isAccept) {
-                color = "#1fb6ff"; // accept uses accent with thicker border
-              }
-
-              //add node to dataset
-              nodes.add({
-                id: stateId,
-                label: state.name || state.id,
-                color: {
-                  background: color,
-                  border: "#cbd5e1",
-                  highlight: { background: "#ffd27a", border: "#ffb02e" },
-                },
-                font: font,
-                shape: "circle",
-                mass: 2,
-                title: stateId,
-              });
-
-              // Track nodeCounter for auto-increment
-              if (stateId.startsWith("q")) {
-                const num = parseInt(stateId.substring(1));
-                if (!isNaN(num)) {
-                  nodeCounter = Math.max(nodeCounter, num + 1);
-                }
-              }
-            });
-          }
-
-          //add each transition as an edge
-          if (scope.automata && scope.automata.transitions) {
-            scope.automata.transitions.forEach((transition) => {
-              const edgeId = "edge-" + edgeCounter++;
-              edges.add({
-                id: edgeId,
-                from: transition.from,
-                to: transition.to,
-                symbol: transition.symbol,
-                writeSymbol: transition.writeSymbol || null,
-                move: transition.move || null,
-                stackSymbol: transition.stackSymbol || null,
-                pushSymbol: transition.pushSymbol || null,
-                label: buildTransitionLabel(transition),
-                arrows: "to",
-                smooth: { type: "cubicBezier" },
-                title: `${transition.from} → ${transition.to}: ${buildTransitionLabel(transition)}`,
-              });
-            });
-          }
+          syncEdgesFromModel();
 
           // Create network
           const options = {
@@ -166,7 +118,7 @@ angular
 
           //create vis network with configured options
           network = new vis.Network(
-            elem[0],
+            graphHost[0],
             { nodes: nodes, edges: edges },
             options,
           );
@@ -177,9 +129,9 @@ angular
           });
 
           // Explicitly set canvas size to match container
-          const canvas = elem[0].querySelector("canvas");
+          const canvas = graphHost[0].querySelector("canvas");
           if (canvas) {
-            const rect = elem[0].getBoundingClientRect();
+            const rect = graphHost[0].getBoundingClientRect();
             canvas.width = rect.width;
             canvas.height = rect.height;
           }
@@ -195,10 +147,160 @@ angular
               $timeout(function () {
                 if (network) {
                   network.fit({ animation: false });
+                  if (!initialView) {
+                    initialView = {
+                      position: network.getViewPosition(),
+                      scale: network.getScale(),
+                    };
+                  }
                 }
               }, 300);
             }
           }, 500);
+        }
+
+        function resetView() {
+          if (!network) {
+            return;
+          }
+
+          if (initialView && initialView.position && initialView.scale) {
+            network.moveTo({
+              position: initialView.position,
+              scale: initialView.scale,
+              animation: {
+                duration: 350,
+                easingFunction: "easeInOutQuad",
+              },
+            });
+            return;
+          }
+
+          network.fit({ animation: true });
+        }
+
+        function getGraphSignature(model) {
+          const accepts = (model.acceptStates || []).join("|");
+          return [accepts, model.initialState || ""].join("#");
+        }
+
+        function getStateSignature(model) {
+          return (model.states || [])
+            .map((state) => state.id || state.name || state)
+            .join("|");
+        }
+
+        function getTransitionSignature(model) {
+          return (model.transitions || [])
+            .map((transition) => {
+              return [
+                transition.from,
+                transition.to,
+                transition.symbol,
+                transition.writeSymbol || "",
+                transition.move || "",
+                transition.stackSymbol || "",
+                transition.pushSymbol || "",
+              ].join("~");
+            })
+            .join("|");
+        }
+
+        function syncEdgesFromModel() {
+          if (!edges) {
+            return;
+          }
+
+          const existingEdges = edges.getIds();
+          if (existingEdges.length > 0) {
+            edges.remove(existingEdges);
+          }
+
+          edgeCounter = 0;
+
+          if (scope.automata && scope.automata.transitions) {
+            scope.automata.transitions.forEach((transition) => {
+              const edgeId = "edge-" + edgeCounter++;
+              edges.add({
+                id: edgeId,
+                from: transition.from,
+                to: transition.to,
+                symbol: transition.symbol,
+                writeSymbol: transition.writeSymbol || null,
+                move: transition.move || null,
+                stackSymbol: transition.stackSymbol || null,
+                pushSymbol: transition.pushSymbol || null,
+                label: buildTransitionLabel(transition),
+                arrows: "to",
+                smooth: { type: "cubicBezier" },
+                title: `${transition.from} → ${transition.to}: ${buildTransitionLabel(transition)}`,
+              });
+            });
+          }
+        }
+
+        function syncNodesFromModel() {
+          if (!nodes) {
+            return;
+          }
+
+          const existingNodes = nodes.getIds();
+          const nextStateIds = (scope.automata.states || []).map(
+            (state) => state.id || state.name,
+          );
+
+          existingNodes.forEach((nodeId) => {
+            if (!nextStateIds.includes(nodeId)) {
+              nodes.remove(nodeId);
+            }
+          });
+
+          (scope.automata.states || []).forEach((state) => {
+            const stateId = state.id || state.name;
+            const isAccept =
+              scope.automata.acceptStates &&
+              scope.automata.acceptStates.includes(stateId);
+            const isInitial = scope.automata.initialState === stateId;
+
+            let color = "#1fb6ff";
+            let font = { size: 14, color: "#ffffff" };
+
+            if (isInitial) {
+              color = "#7c3aed";
+              font.color = "#ffffff";
+            }
+            if (isAccept) {
+              color = "#1fb6ff";
+            }
+
+            const existingNode = nodes.get(stateId);
+            const nextNode = {
+              id: stateId,
+              label: state.name || state.id,
+              color: {
+                background: color,
+                border: "#cbd5e1",
+                highlight: { background: "#ffd27a", border: "#ffb02e" },
+              },
+              font: font,
+              shape: "circle",
+              mass: 2,
+              title: stateId,
+            };
+
+            if (existingNode) {
+              nodes.update(nextNode);
+            } else {
+              nodes.add(nextNode);
+            }
+
+            if (stateId && stateId.startsWith("q")) {
+              const num = parseInt(stateId.substring(1));
+              if (!isNaN(num)) {
+                nodeCounter = Math.max(nodeCounter, num + 1);
+              }
+            }
+          });
         }
 
         //attach user interaction handlers
@@ -340,6 +442,13 @@ angular
           if (scope.onStateRemoved) {
             scope.onStateRemoved({ stateId: stateId });
           }
+
+          if (network) {
+            network.destroy();
+            network = null;
+          }
+
+          initializeGraph();
         }
 
         //prompt user for transition symbol and add transition
@@ -394,6 +503,11 @@ angular
         function addTransition(fromStateId, toStateId, symbol, metadata) {
           if (!scope.automata.transitions) scope.automata.transitions = [];
           if (!scope.automata.alphabet) scope.automata.alphabet = [];
+
+          if (symbol.indexOf(",") !== -1) {
+            alert("Alphabet symbols cannot contain commas. Use separate symbols like 0 and 1 instead of 0,1.");
+            return;
+          }
 
           //check if transition already exists
           const existing = scope.automata.transitions.find(
@@ -517,6 +631,11 @@ angular
           const newLabel = prompt("Enter new state name:", oldLabel);
 
           if (newLabel && newLabel.trim() && newLabel !== oldLabel) {
+            if (newLabel.indexOf(",") !== -1) {
+              alert("State names cannot contain commas.");
+              return;
+            }
+
             //update node label in vis
             const nodeData = nodes.get(stateId);
             nodeData.label = newLabel;
@@ -556,7 +675,14 @@ angular
         scope.$watch(
           "automata",
           function (newVal) {
-            if (newVal && !network) {
+            if (!newVal) {
+              return;
+            }
+
+            const nextSignature = getGraphSignature(newVal);
+            const nextStateSignature = getStateSignature(newVal);
+            if (!network || nextSignature !== graphSignature) {
+              graphSignature = nextSignature;
               //ensure arrays exist in model
               if (!scope.automata.states) scope.automata.states = [];
               if (!scope.automata.transitions) scope.automata.transitions = [];
@@ -564,11 +690,45 @@ angular
                 scope.automata.acceptStates = [];
               if (!scope.automata.alphabet) scope.automata.alphabet = [];
 
+              if (network) {
+                network.destroy();
+                network = null;
+              }
+
               //initialize network
               initializeGraph();
+              stateSignature = nextStateSignature;
             }
           },
           true,
+        );
+
+        scope.$watch(
+          function () {
+            return scope.automata ? getStateSignature(scope.automata) : "";
+          },
+          function (newVal, oldVal) {
+            if (!network || !nodes || newVal === oldVal) {
+              return;
+            }
+
+            stateSignature = newVal;
+            syncNodesFromModel();
+          },
+        );
+
+        scope.$watch(
+          function () {
+            return scope.automata ? getTransitionSignature(scope.automata) : "";
+          },
+          function (newVal, oldVal) {
+            if (!network || !nodes || newVal === oldVal) {
+              return;
+            }
+
+            transitionSignature = newVal;
+            syncEdgesFromModel();
+          },
         );
 
         //cleanup network on directive destroy

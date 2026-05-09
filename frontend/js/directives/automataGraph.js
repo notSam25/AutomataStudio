@@ -11,6 +11,14 @@ angular.module("automataApp").directive("automataGraph", function () {
 
         // clear container
         elem.empty();
+        // add reset toolbar
+        const toolbar = document.createElement('div');
+        toolbar.className = 'graph-editor-toolbar';
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary btn-sm graph-editor-reset';
+        btn.textContent = 'Reset view';
+        toolbar.appendChild(btn);
+        elem[0].appendChild(toolbar);
 
         const nodes = automata.states.map(function (s) {
           const stateName = typeof s === "string" ? s : s.name || s.id;
@@ -18,6 +26,11 @@ angular.module("automataApp").directive("automataGraph", function () {
             id: stateName,
             label: stateName,
           };
+
+          // preserve position if available
+          if (typeof s === 'object' && (s.x !== undefined || s.y !== undefined)) {
+            data.position = { x: s.x || 0, y: s.y || 0 };
+          }
 
           // Only set the data attributes when true so Cytoscape selectors
           // like node[initial] and node[accept] match only the intended nodes.
@@ -43,6 +56,10 @@ angular.module("automataApp").directive("automataGraph", function () {
           };
         });
 
+        // determine layout: use preset if positions present, otherwise run cose
+        const hasPositions = nodes.some((n) => n.data && n.data.position !== undefined);
+        const layoutOption = hasPositions ? { name: 'preset' } : { name: 'cose' };
+
         // initialize cytoscape
         cy = cytoscape({
           container: elem[0],
@@ -66,16 +83,18 @@ angular.module("automataApp").directive("automataGraph", function () {
             {
               selector: "node[accept]",
               style: {
+                "background-color": "#16a34a",
+                color: "#ffffff",
                 "border-width": 8,
-                "border-color": "#16a34a",
+                "border-color": "#14532d",
                 padding: 4,
               },
             },
             {
               selector: "node[initial][accept]",
               style: {
-                "background-color": "#7c3aed",
-                "border-color": "#16a34a",
+                "background-color": "#0f766e",
+                "border-color": "#115e59",
                 "border-width": 8,
               },
             },
@@ -89,7 +108,43 @@ angular.module("automataApp").directive("automataGraph", function () {
             },
             {
               selector: "node.active",
-              style: { "background-color": "#ffd27a", width: 60, height: 60 },
+              style: {
+                "border-color": "#f59e0b",
+                "border-width": 6,
+                "background-opacity": 0.85,
+                width: 60,
+                height: 60,
+              },
+            },
+            {
+              selector: "node.active[accept]",
+              style: {
+                "background-color": "#22c55e",
+                "border-color": "#facc15",
+                "border-width": 8,
+                width: 60,
+                height: 60,
+              }
+            },
+            {
+              selector: "node.active[initial]",
+              style: {
+                "background-color": "#a855f7",
+                "border-color": "#f59e0b",
+                "border-width": 8,
+                width: 60,
+                height: 60,
+              }
+            },
+            {
+              selector: "node.active[initial][accept]",
+              style: {
+                "background-color": "#14b8a6",
+                "border-color": "#fbbf24",
+                "border-width": 8,
+                width: 60,
+                height: 60,
+              }
             },
             {
               selector: "edge",
@@ -105,17 +160,29 @@ angular.module("automataApp").directive("automataGraph", function () {
               },
             },
           ],
-          layout: { name: "cose" },
+          layout: layoutOption,
         });
 
-        const layout = cy.layout({ name: "cose", fit: true });
-        layout.run();
+        let layout;
+        if (!hasPositions) {
+          layout = cy.layout({ name: "cose", fit: true });
+          layout.run();
+        }
 
         layout.on("layoutstop", function () {
           try {
             cy.resize();
             cy.fit(50);
             cy.center();
+            // capture initial view for reset
+            try {
+              const resetBtn = elem[0].querySelector('.graph-editor-reset');
+              if (resetBtn) {
+                resetBtn.addEventListener('click', function () {
+                  cy.fit(50);
+                });
+              }
+            } catch (e) {}
           } catch (e) {}
         });
 

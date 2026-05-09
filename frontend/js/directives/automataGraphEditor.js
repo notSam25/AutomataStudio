@@ -378,6 +378,24 @@ angular
               alphabet: [],
             };
           }
+
+          //capture node positions after drag so positions can be persisted
+          network.on("dragEnd", function (params) {
+            try {
+              const movedNodes = params.nodes || [];
+              if (movedNodes.length === 0) return;
+              movedNodes.forEach((nodeId) => {
+                const nodePos = network.getPositions([nodeId])[nodeId];
+                // update scope model entry
+                const state = scope.automata.states.find((s) => (s.id || s.name) === nodeId);
+                if (state) {
+                  state.x = nodePos.x;
+                  state.y = nodePos.y;
+                }
+              });
+              scope.$applyAsync();
+            } catch (e) {}
+          });
           if (!scope.automata.states) scope.automata.states = [];
 
           const stateId = "q" + nodeCounter++;

@@ -1,5 +1,8 @@
 angular.module("automataApp").factory("AuthService", function ($http, $window) {
-  const API_BASE = (window && window.__API_BASE__) ? window.__API_BASE__ : "http://localhost:5000/api";
+  const API_BASE =
+    window && window.__API_BASE__
+      ? window.__API_BASE__
+      : "http://localhost:5000/api";
   const TOKEN_KEY = "automata_auth_token";
   const USER_KEY = "automata_current_user";
 
@@ -54,21 +57,25 @@ angular.module("automataApp").factory("AuthService", function ($http, $window) {
     },
 
     register: function (payload) {
-      return $http.post(API_BASE + "/auth/register", payload, {
-        headers: { "Content-Type": "application/json" },
-      }).then(function (response) {
-        setSession(response.data.token, response.data.user);
-        return response;
-      });
+      return $http
+        .post(API_BASE + "/auth/register", payload, {
+          headers: { "Content-Type": "application/json" },
+        })
+        .then(function (response) {
+          setSession(response.data.token, response.data.user);
+          return response;
+        });
     },
 
     login: function (payload) {
-      return $http.post(API_BASE + "/auth/login", payload, {
-        headers: { "Content-Type": "application/json" },
-      }).then(function (response) {
-        setSession(response.data.token, response.data.user);
-        return response;
-      });
+      return $http
+        .post(API_BASE + "/auth/login", payload, {
+          headers: { "Content-Type": "application/json" },
+        })
+        .then(function (response) {
+          setSession(response.data.token, response.data.user);
+          return response;
+        });
     },
 
     fetchMe: function () {

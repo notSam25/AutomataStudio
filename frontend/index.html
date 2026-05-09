@@ -5,8 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AutomataStudio</title>
     <meta name="theme-color" content="#ffffff" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%230b1220'/><text x='50' y='60' font-size='50' font-weight='bold' fill='white' text-anchor='middle'>A</text></svg>" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%230b1220'/><text x='50' y='60' font-size='50' font-weight='bold' fill='white' text-anchor='middle'>A</text></svg>"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- Angular and ngRoute -->
     <script src="./node_modules/angular/angular.min.js"></script>
@@ -42,12 +49,37 @@
     </header>
 
     <nav>
-      <a ng-click="navigate('/')" style="cursor: pointer;">Dashboard</a>
-      <a ng-click="navigate('/create')" ng-show="auth.isAuthenticated()" style="cursor: pointer;">Create Automata</a>
-      <a ng-click="navigate('/profile')" ng-show="auth.isAuthenticated()" style="cursor: pointer;">Profile</a>
-      <a ng-click="navigate('/login')" ng-show="!auth.isAuthenticated()" style="cursor: pointer;">Login</a>
-      <a ng-click="navigate('/register')" ng-show="!auth.isAuthenticated()" style="cursor: pointer;">Register</a>
-      <a ng-click="logout()" ng-show="auth.isAuthenticated()" style="cursor: pointer;">Logout</a>
+      <a ng-click="navigate('/')" style="cursor: pointer">Dashboard</a>
+      <a
+        ng-click="navigate('/create')"
+        ng-show="auth.isAuthenticated()"
+        style="cursor: pointer"
+        >Create Automata</a
+      >
+      <a
+        ng-click="navigate('/profile')"
+        ng-show="auth.isAuthenticated()"
+        style="cursor: pointer"
+        >Profile</a
+      >
+      <a
+        ng-click="navigate('/login')"
+        ng-show="!auth.isAuthenticated()"
+        style="cursor: pointer"
+        >Login</a
+      >
+      <a
+        ng-click="navigate('/register')"
+        ng-show="!auth.isAuthenticated()"
+        style="cursor: pointer"
+        >Register</a
+      >
+      <a
+        ng-click="logout()"
+        ng-show="auth.isAuthenticated()"
+        style="cursor: pointer"
+        >Logout</a
+      >
     </nav>
 
     <!-- Main content area -->

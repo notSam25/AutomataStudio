@@ -94,6 +94,12 @@ angular
       // Add state to list
       $scope.addState = function () {
         const stateName = ($scope.stateInput || "").trim();
+
+        if (stateName.includes(",")) {
+          $scope.error = "State names cannot contain commas";
+          return;
+        }
+
         const exists = $scope.automata.states.some(
           (s) => (s.name || s.id) === stateName,
         );
@@ -120,6 +126,11 @@ angular
           $scope.symbolInput &&
           !$scope.automata.alphabet.includes($scope.symbolInput)
         ) {
+          if ($scope.symbolInput.includes(",")) {
+            $scope.error = "Alphabet symbols cannot contain commas";
+            return;
+          }
+
           $scope.automata.alphabet.push($scope.symbolInput);
           $scope.symbolInput = "";
         } else if ($scope.automata.alphabet.includes($scope.symbolInput)) {
@@ -150,6 +161,11 @@ angular
           to: $scope.transitionTo,
           symbol: $scope.transitionSymbol,
         };
+
+        if (transition.symbol.includes(",")) {
+          $scope.error = "Transition symbols cannot contain commas";
+          return;
+        }
 
         if ($scope.automata.type === "PDA") {
           transition.stackSymbol = $scope.transitionStackSymbol || null;

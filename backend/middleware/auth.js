@@ -10,6 +10,11 @@ const getToken = (req) => {
 };
 
 const optionalAuth = async (req, res, next) => {
+  // Allow preflight requests to pass through without auth
+  if (req.method === "OPTIONS") {
+    req.user = null;
+    return next();
+  }
   try {
     const token = getToken(req);
     if (!token) {
@@ -26,6 +31,10 @@ const optionalAuth = async (req, res, next) => {
 };
 
 const requireAuth = async (req, res, next) => {
+  // Allow preflight requests to pass through without auth
+  if (req.method === "OPTIONS") {
+    return next();
+  }
   try {
     const token = getToken(req);
     if (!token) {

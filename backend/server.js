@@ -8,6 +8,20 @@ const requestLogger = require("./middleware/logger");
 
 const app = express();
 
+// Always set basic CORS headers early to cover any early/fast responses
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS",
+  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
 // Middleware
 app.use(requestLogger);
 app.use(express.json());

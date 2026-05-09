@@ -18,6 +18,11 @@ angular
       $scope.transitionFrom = "";
       $scope.transitionTo = "";
       $scope.transitionSymbol = "";
+      $scope.transitionStackSymbol = "";
+      $scope.transitionPushSymbol = "";
+      $scope.transitionWriteSymbol = "";
+      $scope.transitionMove = "R";
+      $scope.stackAlphabetInput = "";
       $scope.acceptStateMap = {}; // Map for accept state checkboxes
 
       $scope.types = ["DFA", "NFA", "PDA", "TURING"];
@@ -46,6 +51,22 @@ angular
         ).filter((key) => $scope.acceptStateMap[key]);
       };
 
+      $scope.handleTypeChange = function () {
+        if ($scope.automata.type === "PDA") {
+          if (!$scope.automata.stackAlphabet || $scope.automata.stackAlphabet.length === 0) {
+            $scope.automata.stackAlphabet = ["Z"];
+          }
+          if (!$scope.automata.initialStackSymbol) {
+            $scope.automata.initialStackSymbol = "Z";
+          }
+          $scope.stackAlphabetInput = ($scope.automata.stackAlphabet || []).join(", ");
+        }
+
+        if ($scope.automata.type === "TURING" && !$scope.automata.tape) {
+          $scope.automata.tape = "_";
+        }
+      };
+
       // Watch automata states to update acceptStateMap
       $scope.$watch(
         "automata.states",
@@ -66,6 +87,7 @@ angular
       AutomataService.getAutomataById($routeParams.id).then(
         function (response) {
           $scope.automata = response.data;
+          $scope.stackAlphabetInput = ($scope.automata.stackAlphabet || []).join(", ");
           $scope.loading = false;
         },
         function (error) {
@@ -133,10 +155,24 @@ angular
           symbol: $scope.transitionSymbol,
         };
 
+        if ($scope.automata.type === "PDA") {
+          transition.stackSymbol = $scope.transitionStackSymbol || null;
+          transition.pushSymbol = $scope.transitionPushSymbol || null;
+        }
+
+        if ($scope.automata.type === "TURING") {
+          transition.writeSymbol = $scope.transitionWriteSymbol || null;
+          transition.move = $scope.transitionMove || "R";
+        }
+
         $scope.automata.transitions.push(transition);
         $scope.transitionFrom = "";
         $scope.transitionTo = "";
         $scope.transitionSymbol = "";
+        $scope.transitionStackSymbol = "";
+        $scope.transitionPushSymbol = "";
+        $scope.transitionWriteSymbol = "";
+        $scope.transitionMove = "R";
         $scope.error = null;
       };
 
@@ -168,7 +204,24 @@ angular
         $scope.error = null;
         $scope.success = null;
 
-        AutomataService.updateAutomata($routeParams.id, $scope.automata).then(
+        const dataToSave = angular.copy($scope.automata);
+
+        if (dataToSave.type === "PDA") {
+          const parsedStackAlphabet = String($scope.stackAlphabetInput || "")
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean);
+
+          dataToSave.stackAlphabet =
+            parsedStackAlphabet.length > 0 ? parsedStackAlphabet : ["Z"];
+          dataToSave.initialStackSymbol = dataToSave.initialStackSymbol || "Z";
+        }
+
+        if (dataToSave.type === "TURING") {
+          dataToSave.tape = dataToSave.tape || "_";
+        }
+
+        AutomataService.updateAutomata($routeParams.id, dataToSave).then(
           function (response) {
             $scope.success = "Automata updated successfully!";
             setTimeout(function () {

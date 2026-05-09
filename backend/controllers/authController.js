@@ -118,25 +118,64 @@ exports.getMe = async (req, res) => {
   return res.status(200).json({ user: sanitizeUser(req.user) });
 };
 
-//update current user's username with uniqueness check
+//update current user's profile and password with uniqueness checks
 exports.updateMe = async (req, res) => {
   try {
-    const { username } = req.body;
-    if (!username) {
-      return res.status(400).json({ error: "username is required" });
+    const { username, email, oldPassword, newPassword } = req.body;
+
+    if (!username && !email && !newPassword) {
+      return res.status(400).json({ error: "No changes provided" });
     }
 
-    const normalized = String(username).trim();
-    const existing = await User.findOne({ username: normalized, _id: { $ne: req.user._id } });
-    if (existing) {
-      return res.status(409).json({ error: "Username already taken" });
+    const updates = {};
+
+    if (username) {
+      const normalizedUsername = String(username).trim();
+      const existingUsername = await User.findOne({
+        username: normalizedUsername,
+        _id: { $ne: req.user._id },
+      });
+      if (existingUsername) {
+        return res.status(409).json({ error: "Username already taken" });
+      }
+
+      updates.username = normalizedUsername;
     }
 
-    const updated = await User.findByIdAndUpdate(
-      req.user._id,
-      { username: normalized },
-      { new: true },
-    );
+    if (email) {
+      const normalizedEmail = String(email).trim().toLowerCase();
+      const existingEmail = await User.findOne({
+        email: normalizedEmail,
+        _id: { $ne: req.user._id },
+      });
+      if (existingEmail) {
+        return res.status(409).json({ error: "Email already in use" });
+      }
+
+      updates.email = normalizedEmail;
+    }
+
+    if (newPassword) {
+      if (!oldPassword) {
+        return res.status(400).json({ error: "Old password is required" });
+      }
+
+      const currentUser = await User.findById(req.user._id);
+      if (!currentUser || !verifyPassword(oldPassword, currentUser.passwordHash)) {
+        return res.status(401).json({ error: "Old password is incorrect" });
+      }
+
+      if (String(newPassword).length < 8) {
+        return res.status(400).json({ error: "Password must be at least 8 characters" });
+      }
+
+      updates.passwordHash = hashPassword(String(newPassword));
+    }
+
+    const updated = await User.findByIdAndUpdate(req.user._id, updates, {
+      new: true,
+      runValidators: true,
+    });
 
     return res.status(200).json({ user: sanitizeUser(updated) });
   } catch (error) {

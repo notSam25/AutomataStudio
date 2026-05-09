@@ -14,14 +14,21 @@ angular.module("automataApp").directive("automataGraph", function () {
 
         const nodes = automata.states.map(function (s) {
           const stateName = typeof s === "string" ? s : s.name || s.id;
-          return {
-            data: {
-              id: stateName,
-              label: stateName,
-              accept: (automata.acceptStates || []).includes(stateName),
-              initial: automata.initialState === stateName,
-            },
+          const data = {
+            id: stateName,
+            label: stateName,
           };
+
+          // Only set the data attributes when true so Cytoscape selectors
+          // like node[initial] and node[accept] match only the intended nodes.
+          if ((automata.acceptStates || []).includes(stateName)) {
+            data.accept = true;
+          }
+          if (automata.initialState === stateName) {
+            data.initial = true;
+          }
+
+          return { data };
         });
 
         const edges = (automata.transitions || []).map(function (t, idx) {
@@ -62,6 +69,14 @@ angular.module("automataApp").directive("automataGraph", function () {
                 "border-width": 8,
                 "border-color": "#16a34a",
                 padding: 4,
+              },
+            },
+            {
+              selector: "node[initial][accept]",
+              style: {
+                "background-color": "#7c3aed",
+                "border-color": "#16a34a",
+                "border-width": 8,
               },
             },
             {
@@ -127,8 +142,15 @@ angular.module("automataApp").directive("automataGraph", function () {
           try {
             cy.nodes().removeClass("active");
             if (newVal && newVal.state) {
-              const node = cy.$("#" + newVal.state);
-              if (node.length) node.addClass("active");
+              // activeStep.state can be a single state (e.g. "q0") or a
+              // comma-separated list for NFAs (e.g. "q0,q1"). Build a
+              // selector that targets the appropriate node ids.
+              const states = String(newVal.state).split(",").map((s) => s.trim()).filter(Boolean);
+              if (states.length) {
+                const selector = states.map((s) => "#" + s).join(",");
+                const nodes = cy.$(selector);
+                if (nodes.length) nodes.addClass("active");
+              }
             }
           } catch (e) {}
         }

@@ -4,29 +4,17 @@
       <h2>Edit Automata</h2>
     </div>
 
-        <div ng-include="'views/automata-form.html'"></div>
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+    <div class="alert alert-error show" ng-show="error">{{ error }}</div>
+    <div class="alert alert-success show" ng-show="success">
+      {{ success }}
+    </div>
 
-        <hr />
-        <div class="form-group">
-          <button
-            type="button"
-            class="btn btn-success"
-            ng-click="updateAutomata()"
-          >
-            Update Automata
-          </button>
-          <button type="button" class="btn btn-secondary" ng-click="cancel()">
-            Cancel
-          </button>
-        </div>
-      </form>
+    <div ng-show="loading" class="loading">
+      <p>Loading automata...</p>
+    </div>
+
+    <div ng-show="!loading">
+      <div ng-include="'views/automata-form.html'"></div>
     </div>
   </div>
 </div>

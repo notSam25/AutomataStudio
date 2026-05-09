@@ -20,6 +20,7 @@ angular
         let nodes = null;
         let edges = null;
         let nodeCounter = 0;
+        let edgeCounter = 0;
         let selectedNodeId = null;
 
         //redraw network on window resize
@@ -57,6 +58,7 @@ angular
           nodes = new vis.DataSet();
           edges = new vis.DataSet();
           nodeCounter = 0;
+          edgeCounter = 0;
 
           // Add existing states as nodes
           if (
@@ -112,13 +114,20 @@ angular
           //add each transition as an edge
           if (scope.automata && scope.automata.transitions) {
             scope.automata.transitions.forEach((transition) => {
+              const edgeId = "edge-" + edgeCounter++;
               edges.add({
+                id: edgeId,
                 from: transition.from,
                 to: transition.to,
-                label: transition.symbol,
+                symbol: transition.symbol,
+                writeSymbol: transition.writeSymbol || null,
+                move: transition.move || null,
+                stackSymbol: transition.stackSymbol || null,
+                pushSymbol: transition.pushSymbol || null,
+                label: buildTransitionLabel(transition),
                 arrows: "to",
                 smooth: { type: "cubicBezier" },
-                title: `${transition.from} → ${transition.to}: ${transition.symbol}`,
+                title: `${transition.from} → ${transition.to}: ${buildTransitionLabel(transition)}`,
               });
             });
           }
@@ -198,6 +207,13 @@ angular
           network.on("click", function (params) {
             if (params.nodes.length > 0) {
               const clickedNodeId = params.nodes[0];
+
+              if (selectedNodeId && selectedNodeId === clickedNodeId) {
+                showTransitionDialog(selectedNodeId, clickedNodeId);
+                network.unselectAll();
+                selectedNodeId = null;
+                return;
+              }
 
               if (selectedNodeId && selectedNodeId !== clickedNodeId) {
                 showTransitionDialog(selectedNodeId, clickedNodeId);
@@ -328,24 +344,54 @@ angular
 
         //prompt user for transition symbol and add transition
         function showTransitionDialog(fromStateId, toStateId) {
-          //prompt for label when connecting two states
-          const alphabet =
-            (scope.automata.alphabet || []).length > 0
-              ? scope.automata.alphabet.join(", ")
-              : "No alphabet defined";
+          const type = String(scope.automata.type || "DFA").toUpperCase();
 
-          const symbol = prompt(
-            `Enter transition symbol:\n\nAvailable alphabet: ${alphabet}`,
-            "",
-          );
-
-          if (symbol !== null && symbol.trim() !== "") {
-            addTransition(fromStateId, toStateId, symbol.trim());
+          const symbol = prompt("Enter transition symbol:", "");
+          if (symbol === null || symbol.trim() === "") {
+            return;
           }
+
+          if (type === "PDA") {
+            const stackSymbol = prompt("Enter required stack symbol or leave blank:", "");
+            if (stackSymbol === null) {
+              return;
+            }
+
+            const pushSymbol = prompt("Enter push symbol or leave blank:", "");
+            if (pushSymbol === null) {
+              return;
+            }
+
+            addTransition(fromStateId, toStateId, symbol.trim(), {
+              stackSymbol: stackSymbol.trim() || null,
+              pushSymbol: pushSymbol.trim() || null,
+            });
+            return;
+          }
+
+          if (type === "TURING") {
+            const writeSymbol = prompt("Enter write symbol or leave blank:", symbol.trim());
+            if (writeSymbol === null) {
+              return;
+            }
+
+            const move = prompt("Enter head move (L, R, or S):", "R");
+            if (move === null) {
+              return;
+            }
+
+            addTransition(fromStateId, toStateId, symbol.trim(), {
+              writeSymbol: writeSymbol.trim() || symbol.trim(),
+              move: move.trim().toUpperCase() || "R",
+            });
+            return;
+          }
+
+          addTransition(fromStateId, toStateId, symbol.trim());
         }
 
         //add transition to automata model and graph
-        function addTransition(fromStateId, toStateId, symbol) {
+        function addTransition(fromStateId, toStateId, symbol, metadata) {
           if (!scope.automata.transitions) scope.automata.transitions = [];
           if (!scope.automata.alphabet) scope.automata.alphabet = [];
 
@@ -366,6 +412,10 @@ angular
             from: fromStateId,
             to: toStateId,
             symbol: symbol,
+            writeSymbol: metadata && metadata.writeSymbol ? metadata.writeSymbol : null,
+            move: metadata && metadata.move ? metadata.move : null,
+            stackSymbol: metadata && metadata.stackSymbol ? metadata.stackSymbol : null,
+            pushSymbol: metadata && metadata.pushSymbol ? metadata.pushSymbol : null,
           };
 
           scope.automata.transitions.push(newTransition);
@@ -375,20 +425,62 @@ angular
             scope.automata.alphabet.push(symbol);
           }
 
-          //add edge to vis graph
-          edges.add({
-            from: fromStateId,
-            to: toStateId,
-            label: symbol,
-            arrows: "to",
-            smooth: { type: "cubicBezier" },
-            title: `${fromStateId} → ${toStateId}: ${symbol}`,
-          });
+          const edgeLabel = buildTransitionLabel(newTransition);
+          const edgeId = "edge-" + edgeCounter++;
+
+          if (fromStateId === toStateId) {
+            // self loops need a visible curve so the arrow does not sit on top of the node
+            edges.add({
+              id: edgeId,
+              from: fromStateId,
+              to: toStateId,
+              symbol: symbol,
+              writeSymbol: newTransition.writeSymbol,
+              move: newTransition.move,
+              stackSymbol: newTransition.stackSymbol,
+              pushSymbol: newTransition.pushSymbol,
+              label: edgeLabel,
+              arrows: "to",
+              selfReferenceSize: 35,
+              smooth: { enabled: true, type: "curvedCW", roundness: 0.35 },
+              title: `${fromStateId} → ${toStateId}: ${edgeLabel}`,
+            });
+          } else {
+            //add edge to vis graph
+            edges.add({
+              id: edgeId,
+              from: fromStateId,
+              to: toStateId,
+              symbol: symbol,
+              writeSymbol: newTransition.writeSymbol,
+              move: newTransition.move,
+              stackSymbol: newTransition.stackSymbol,
+              pushSymbol: newTransition.pushSymbol,
+              label: edgeLabel,
+              arrows: "to",
+              smooth: { type: "cubicBezier" },
+              title: `${fromStateId} → ${toStateId}: ${edgeLabel}`,
+            });
+          }
 
           scope.$apply();
           if (scope.onTransitionAdded) {
             scope.onTransitionAdded({ transition: newTransition });
           }
+        }
+
+        //build a readable label for the transition
+        function buildTransitionLabel(transition) {
+          const parts = [transition.symbol];
+          if (transition.stackSymbol || transition.pushSymbol) {
+            parts.push(`stack:${transition.stackSymbol || "*"}`);
+            parts.push(`push:${transition.pushSymbol || "ε"}`);
+          }
+          if (transition.writeSymbol || transition.move) {
+            parts.push(`write:${transition.writeSymbol || transition.symbol}`);
+            parts.push(`move:${transition.move || "R"}`);
+          }
+          return parts.join(" | ");
         }
 
         //remove a transition from model and graph
@@ -403,7 +495,11 @@ angular
                 !(
                   t.from === edge.from &&
                   t.to === edge.to &&
-                  t.symbol === edge.label
+                  t.symbol === edge.symbol &&
+                  (t.writeSymbol || null) === (edge.writeSymbol || null) &&
+                  (t.move || null) === (edge.move || null) &&
+                  (t.stackSymbol || null) === (edge.stackSymbol || null) &&
+                  (t.pushSymbol || null) === (edge.pushSymbol || null)
                 ),
             );
           }

@@ -36,6 +36,11 @@ const normalizeAutomataPayload = (payload) => {
     acceptStates: (payload.acceptStates || [])
       .map(normalizeStateName)
       .filter(Boolean),
+    stackAlphabet: Array.isArray(payload.stackAlphabet)
+      ? payload.stackAlphabet.filter(Boolean)
+      : [],
+    initialStackSymbol: payload.initialStackSymbol || "Z",
+    tape: payload.tape || null,
   };
 };
 
@@ -71,6 +76,9 @@ exports.createAutomata = async (req, res) => {
       initialState,
       acceptStates,
       transitions,
+      stackAlphabet,
+      initialStackSymbol,
+      tape,
       description,
     } = normalized;
 
@@ -94,6 +102,9 @@ exports.createAutomata = async (req, res) => {
       initialState,
       acceptStates,
       transitions: transitions || [],
+      stackAlphabet: stackAlphabet || [],
+      initialStackSymbol,
+      tape,
       description,
     });
 

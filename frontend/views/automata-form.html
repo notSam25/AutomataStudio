@@ -12,9 +12,33 @@
 
   <div class="form-group">
     <label for="type">Type *</label>
-    <select id="type" ng-model="automata.type" required>
+    <select id="type" ng-model="automata.type" ng-change="handleTypeChange()" required>
       <option ng-repeat="t in types" value="{{ t }}">{{ t }}</option>
     </select>
+  </div>
+
+  <div class="editor-instructions" ng-show="automata.type === 'DFA' || automata.type === 'NFA'">
+    <p><strong>DFA and NFA</strong></p>
+    <ul>
+      <li>DFA transitions should be complete for every state and alphabet symbol</li>
+      <li>NFA transitions may branch to multiple destinations for the same symbol</li>
+    </ul>
+  </div>
+
+  <div class="editor-instructions" ng-show="automata.type === 'PDA'">
+    <p><strong>PDA settings</strong></p>
+    <ul>
+      <li>Define the stack alphabet and initial stack symbol</li>
+      <li>Transitions can include a required stack symbol and a push symbol</li>
+    </ul>
+  </div>
+
+  <div class="editor-instructions" ng-show="automata.type === 'TURING'">
+    <p><strong>Turing machine settings</strong></p>
+    <ul>
+      <li>Transitions can include a write symbol and head movement</li>
+      <li>Use L, R, or S for head movement</li>
+    </ul>
   </div>
 
   <div class="form-group">
@@ -33,6 +57,7 @@
     <ul>
       <li>Click on the canvas to add states</li>
       <li>Click one state then another to create transitions</li>
+      <li>Click the same state twice to add a self transition</li>
       <li>Double-click on a state to rename it</li>
       <li>Right-click on a state or transition to delete it</li>
     </ul>
@@ -73,6 +98,46 @@
     </div>
   </div>
 
+  <div ng-show="automata.type === 'PDA'">
+    <hr />
+    <h3>Stack Properties</h3>
+    <div class="form-group">
+      <label for="initialStackSymbol">Initial Stack Symbol</label>
+      <input
+        type="text"
+        id="initialStackSymbol"
+        ng-model="automata.initialStackSymbol"
+        placeholder="e.g., Z"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="stackAlphabet">Stack Alphabet</label>
+      <input
+        type="text"
+        id="stackAlphabet"
+        ng-model="stackAlphabetInput"
+        placeholder="e.g., Z,A,B"
+      />
+      <small class="text-muted">Comma separate symbols</small>
+    </div>
+  </div>
+
+  <div ng-show="automata.type === 'TURING'">
+    <hr />
+    <h3>Tape Properties</h3>
+    <div class="form-group">
+      <label for="tape">Initial Tape</label>
+      <input
+        type="text"
+        id="tape"
+        ng-model="automata.tape"
+        placeholder="e.g., _"
+      />
+      <small class="text-muted">Use _ for blank</small>
+    </div>
+  </div>
+
   <hr />
   <h3>Alphabet</h3>
   <div class="form-group">
@@ -107,21 +172,9 @@
   </div>
 
   <hr />
-  <h3>Initial State & Transitions</h3>
+  <h3>Transitions</h3>
   <div class="form-group">
-    <label for="initialState">Initial State *</label>
-    <select
-      id="initialState"
-      ng-model="automata.initialState"
-      ng-options="(state.name || state.id) as (state.name || state.id) for state in automata.states"
-      required
-    >
-      <option value="">-- Select Initial State --</option>
-    </select>
-  </div>
-
-  <div class="form-group">
-    <h4>Add Transitions</h4>
+    <h4>Add Transition</h4>
     <div>
       <label>From State:</label>
       <select
@@ -149,6 +202,26 @@
         <option value="">-- Select --</option>
       </select>
     </div>
+    <div ng-show="automata.type === 'PDA'">
+      <label>Stack Symbol:</label>
+      <input type="text" ng-model="transitionStackSymbol" placeholder="e.g., Z" />
+    </div>
+    <div ng-show="automata.type === 'PDA'">
+      <label>Push Symbol:</label>
+      <input type="text" ng-model="transitionPushSymbol" placeholder="e.g., AZ" />
+    </div>
+    <div ng-show="automata.type === 'TURING'">
+      <label>Write Symbol:</label>
+      <input type="text" ng-model="transitionWriteSymbol" placeholder="e.g., 1" />
+    </div>
+    <div ng-show="automata.type === 'TURING'">
+      <label>Move:</label>
+      <select ng-model="transitionMove">
+        <option value="L">L</option>
+        <option value="R">R</option>
+        <option value="S">S</option>
+      </select>
+    </div>
     <button
       type="button"
       class="btn btn-primary"
@@ -166,6 +239,10 @@
           <th>From</th>
           <th>Symbol</th>
           <th>To</th>
+          <th ng-show="automata.type === 'PDA'">Stack Symbol</th>
+          <th ng-show="automata.type === 'PDA'">Push Symbol</th>
+          <th ng-show="automata.type === 'TURING'">Write Symbol</th>
+          <th ng-show="automata.type === 'TURING'">Move</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -174,6 +251,10 @@
           <td>{{ t.from }}</td>
           <td>{{ t.symbol }}</td>
           <td>{{ t.to }}</td>
+          <td ng-show="automata.type === 'PDA'">{{ t.stackSymbol || '-' }}</td>
+          <td ng-show="automata.type === 'PDA'">{{ t.pushSymbol || '-' }}</td>
+          <td ng-show="automata.type === 'TURING'">{{ t.writeSymbol || '-' }}</td>
+          <td ng-show="automata.type === 'TURING'">{{ t.move || '-' }}</td>
           <td>
             <button
               type="button"

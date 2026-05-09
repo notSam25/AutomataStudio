@@ -1,6 +1,19 @@
 # AutomataStudio
 
+# Summary
 This project allows a user to build and simulate a variety of Automata. Built with a MEAN (MongoDB, Express.JS, Angular.JS, NodeJS) stack on top of Docker Compose (see the [Demo](#demo) section for easy deployment)
+
+# Technology Breakdown
+- Frontend: AngularJS 1.x, HTML, CSS, JavaScript, Cytoscape.js, vis.js
+- Backend: Node.js, Express.js, MongoDB, Mongoose
+- DevOps: Docker, Docker Compose
+- Features: authentication, automata CRUD, public sharing, JSON export, simulation history
+
+# Deployed URL Link
+
+
+#  Youtube Video Link
+
 
 # Current Feature Set
 - Account registration and login
@@ -36,3 +49,7 @@ Backend API runs on `http://localhost:5000` and frontend runs on `http://localho
 - Register a new user from `#!/register`
 - Login from `#!/login`
 - Create/edit/delete/share automata while authenticated
+
+# Team Roles
+- Sam Wiseman (Backend and deployment)
+- Bradley Thornton (Frontend)

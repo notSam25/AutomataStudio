@@ -41,8 +41,16 @@ jobs:
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
         run: |
           if [ -n "$BACKEND_URL" ]; then
-            echo "window.__API_BASE__ = '$BACKEND_URL';" > frontend/config.js
-            echo "Injected BACKEND_URL from secrets"
+            # Strip trailing slash if present
+            NORMALIZED="${BACKEND_URL%/}"
+            # Ensure it ends with /api
+            if echo "$NORMALIZED" | grep -qE '/api$'; then
+              API_BASE="$NORMALIZED"
+            else
+              API_BASE="$NORMALIZED/api"
+            fi
+            echo "window.__API_BASE__ = '$API_BASE';" > frontend/config.js
+            echo "Injected BACKEND_URL from secrets -> $API_BASE"
           else
             echo "window.__API_BASE__ = 'http://localhost:5000/api';" > frontend/config.js
             echo "No BACKEND_URL secret set; using localhost fallback"

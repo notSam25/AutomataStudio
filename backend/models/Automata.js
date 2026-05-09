@@ -14,6 +14,14 @@ const transitionSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    writeSymbol: {
+      type: String,
+      default: null, // For Turing machines
+    },
+    move: {
+      type: String,
+      default: null, // For Turing machines
+    },
     stackSymbol: {
       type: String,
       default: null, // For PDA
@@ -28,6 +36,11 @@ const transitionSchema = new mongoose.Schema(
 
 const automataSchema = new mongoose.Schema(
   {
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     name: {
       type: String,
       required: true,
@@ -70,6 +83,15 @@ const automataSchema = new mongoose.Schema(
     description: {
       type: String,
       default: "",
+    },
+    isPublic: {
+      type: Boolean,
+      default: false,
+    },
+    shareId: {
+      type: String,
+      default: null,
+      index: true,
     },
   },
   {

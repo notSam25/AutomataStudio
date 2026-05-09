@@ -12,6 +12,10 @@
         <p>Create, manage, and simulate your automata</p>
       </div>
 
+      <div class="alert alert-info show" ng-show="!isAuthenticated()">
+        Login to create, edit, delete, and share automata.
+      </div>
+
       <button class="btn btn-success" ng-click="createNew()">
         + Create New Automata
       </button>
@@ -26,46 +30,48 @@
     </div>
 
     <div ng-show="automata.length > 0">
-      <div class="card">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>States</th>
-              <th>Alphabet</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr ng-repeat="a in automata">
-              <td>{{ a.name }}</td>
-              <td><span class="badge badge-primary">{{ a.type }}</span></td>
-              <td>{{ a.states.length }}</td>
-              <td>{{ a.alphabet.join(', ') }}</td>
-              <td>
-                <button
-                  class="btn btn-primary btn-sm"
-                  ng-click="viewAutomata(a._id)"
-                >
-                  Simulate
-                </button>
-                <button
-                  class="btn btn-secondary btn-sm"
-                  ng-click="editAutomata(a._id)"
-                >
-                  Edit
-                </button>
-                <button
-                  class="btn btn-danger btn-sm"
-                  ng-click="deleteAutomata(a._id, a.name)"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="grid automata-grid">
+          <div class="card automata-card" ng-repeat="a in automata">
+            <div class="card-header automata-card-header">
+              <div>
+                <h3>{{ a.name }}</h3>
+                <p class="text-muted">{{ a.description || 'No description provided' }}</p>
+              </div>
+              <span class="badge badge-primary">{{ a.type }}</span>
+            </div>
+
+            <div class="automata-meta">
+              <span>{{ a.states.length }} states</span>
+              <span>{{ a.alphabet.join(', ') || 'No alphabet' }}</span>
+            </div>
+
+            <div class="action-row">
+              <button class="btn btn-secondary btn-sm" ng-click="editAutomata(a._id)">
+                Edit
+              </button>
+              <button class="btn btn-primary btn-sm" ng-click="viewAutomata(a._id)">
+                Simulate
+              </button>
+              <button
+                class="btn btn-danger btn-sm"
+                ng-click="deleteAutomata(a._id, a.name)"
+                ng-show="isAuthenticated()"
+              >
+                Delete
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                ng-click="shareAutomata(a._id)"
+                ng-show="isAuthenticated()"
+              >
+                Share
+              </button>
+              <button class="btn btn-primary btn-sm" ng-click="exportAutomata(a._id)">
+                Export
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

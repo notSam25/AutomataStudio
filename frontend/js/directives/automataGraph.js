@@ -9,27 +9,36 @@ angular.module("automataApp").directive("automataGraph", function () {
       function renderGraph(automata) {
         if (!automata || !automata.states) return;
 
-        // Clear container
+        // clear container
         elem.empty();
 
         const nodes = automata.states.map(function (s) {
-          return {
-            data: {
-              id: s,
-              label: s,
-              accept: (automata.acceptStates || []).includes(s) ? true : false,
-              initial: automata.initialState === s ? true : false,
-            },
+          const stateName = typeof s === "string" ? s : s.name || s.id;
+          const data = {
+            id: stateName,
+            label: stateName,
           };
+
+          // Only set the data attributes when true so Cytoscape selectors
+          // like node[initial] and node[accept] match only the intended nodes.
+          if ((automata.acceptStates || []).includes(stateName)) {
+            data.accept = true;
+          }
+          if (automata.initialState === stateName) {
+            data.initial = true;
+          }
+
+          return { data };
         });
 
         const edges = (automata.transitions || []).map(function (t, idx) {
+          const label = Array.isArray(t.symbol) ? t.symbol.join(",") : t.symbol;
           return {
             data: {
               id: "e" + idx,
               source: t.from,
               target: t.to,
-              label: t.symbol,
+              label: label,
             },
           };
         });
@@ -37,10 +46,7 @@ angular.module("automataApp").directive("automataGraph", function () {
         // initialize cytoscape
         cy = cytoscape({
           container: elem[0],
-          elements: {
-            nodes: nodes,
-            edges: edges,
-          },
+          elements: { nodes: nodes, edges: edges },
           style: [
             {
               selector: "node",
@@ -48,42 +54,42 @@ angular.module("automataApp").directive("automataGraph", function () {
                 label: "data(label)",
                 "text-valign": "center",
                 "text-halign": "center",
-                "background-color": "#3498db",
-                color: "#fff",
-                width: "50",
-                height: "50",
-                "font-size": "12px",
+                "background-color": "#1fb6ff",
+                color: "#ffffff",
+                width: 50,
+                height: 50,
+                "font-size": 12,
                 "border-width": 2,
-                "border-color": "#2c3e50",
+                "border-color": "#cbd5e1",
               },
             },
-            // Accept states: concentric circles (double circle)
             {
               selector: "node[accept]",
               style: {
                 "border-width": 8,
-                "border-color": "#27ae60",
-                "background-color": "#3498db",
+                "border-color": "#16a34a",
                 padding: 4,
               },
             },
-            // Initial state: different background color
+            {
+              selector: "node[initial][accept]",
+              style: {
+                "background-color": "#7c3aed",
+                "border-color": "#16a34a",
+                "border-width": 8,
+              },
+            },
             {
               selector: "node[initial]",
               style: {
-                "background-color": "#f1c40f",
-                "border-color": "#d35400",
+                "background-color": "#7c3aed",
+                "border-color": "#5b21b6",
                 "border-width": 4,
               },
             },
-            // Active/highlighted node during animation
             {
               selector: "node.active",
-              style: {
-                "background-color": "#e74c3c",
-                width: 60,
-                height: 60,
-              },
+              style: { "background-color": "#ffd27a", width: 60, height: 60 },
             },
             {
               selector: "edge",
@@ -91,9 +97,9 @@ angular.module("automataApp").directive("automataGraph", function () {
                 label: "data(label)",
                 "curve-style": "bezier",
                 "target-arrow-shape": "triangle",
-                "target-arrow-color": "#34495e",
-                "line-color": "#95a5a6",
-                "font-size": "10px",
+                "target-arrow-color": "#9aa4b2",
+                "line-color": "#9aa4b2",
+                "font-size": 10,
                 "text-rotation": "autorotate",
                 "text-margin-y": -6,
               },
@@ -102,47 +108,26 @@ angular.module("automataApp").directive("automataGraph", function () {
           layout: { name: "cose" },
         });
 
-        // Run a COSE layout with increased spacing for readability
-        const layout = cy.layout({
-          name: "cose",
-          idealEdgeLength: 120,
-          nodeOverlap: 20,
-          refresh: 20,
-          fit: true,
-          padding: 60,
-          randomize: false,
-          componentSpacing: 120,
-          nodeRepulsion: 8000,
-          edgeElasticity: 100,
-          nestingFactor: 5,
-          gravity: 80,
-          numIter: 1000,
-        });
-
+        const layout = cy.layout({ name: "cose", fit: true });
         layout.run();
 
-        // After layout finishes, fit and center the graph nicely
         layout.on("layoutstop", function () {
           try {
             cy.resize();
             cy.fit(50);
             cy.center();
-          } catch (e) {
-            // ignore
-          }
+          } catch (e) {}
         });
 
-        // handle window resize to keep graph centered
         const onResize = function () {
           try {
             cy.resize();
             cy.fit(50);
-            cy.center();
           } catch (e) {}
         };
+
         window.addEventListener("resize", onResize);
 
-        // cleanup when directive destroyed
         scope.$on("$destroy", function () {
           window.removeEventListener("resize", onResize);
           try {
@@ -151,25 +136,31 @@ angular.module("automataApp").directive("automataGraph", function () {
         });
       }
 
-      // Watch for active step changes to highlight nodes
+      // highlight active step
       scope.$watch("activeStep", function (newVal) {
-        if (cy && newVal) {
-          // Remove active class from all nodes
-          cy.nodes().removeClass("active");
-          // Add active class to current step's state
-          const stateNode = cy.$("#" + newVal.state);
-          if (stateNode.length) {
-            stateNode.addClass("active");
-          }
+        if (cy) {
+          try {
+            cy.nodes().removeClass("active");
+            if (newVal && newVal.state) {
+              // activeStep.state can be a single state (e.g. "q0") or a
+              // comma-separated list for NFAs (e.g. "q0,q1"). Build a
+              // selector that targets the appropriate node ids.
+              const states = String(newVal.state).split(",").map((s) => s.trim()).filter(Boolean);
+              if (states.length) {
+                const selector = states.map((s) => "#" + s).join(",");
+                const nodes = cy.$(selector);
+                if (nodes.length) nodes.addClass("active");
+              }
+            }
+          } catch (e) {}
         }
       });
 
+      // re-render when automata changes
       scope.$watch(
         "automata",
         function (newVal) {
-          if (newVal) {
-            renderGraph(newVal);
-          }
+          if (newVal) renderGraph(newVal);
         },
         true,
       );

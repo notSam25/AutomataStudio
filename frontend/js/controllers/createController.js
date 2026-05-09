@@ -2,7 +2,12 @@ angular
   .module("automataApp")
   .controller(
     "CreateController",
-    function ($scope, $location, AutomataService) {
+    function ($scope, $location, AutomataService, AuthService) {
+      if (!AuthService.isAuthenticated()) {
+        $location.path("/login");
+        return;
+      }
+
       $scope.automata = {
         name: "",
         type: "DFA",
@@ -19,11 +24,32 @@ angular
       $scope.transitionFrom = "";
       $scope.transitionTo = "";
       $scope.transitionSymbol = "";
+      $scope.transitionStackSymbol = "";
+      $scope.transitionPushSymbol = "";
+      $scope.transitionWriteSymbol = "";
+      $scope.transitionMove = "R";
+      $scope.stackAlphabetInput = "";
       $scope.acceptStateMap = {}; // Map for accept state checkboxes
 
       $scope.types = ["DFA", "NFA", "PDA", "TURING"];
       $scope.error = null;
       $scope.success = null;
+
+      $scope.handleTypeChange = function () {
+        if ($scope.automata.type === "PDA") {
+          if (!$scope.automata.stackAlphabet || $scope.automata.stackAlphabet.length === 0) {
+            $scope.automata.stackAlphabet = ["Z"];
+          }
+          if (!$scope.automata.initialStackSymbol) {
+            $scope.automata.initialStackSymbol = "Z";
+          }
+          $scope.stackAlphabetInput = ($scope.automata.stackAlphabet || []).join(", ");
+        }
+
+        if ($scope.automata.type === "TURING" && !$scope.automata.tape) {
+          $scope.automata.tape = "_";
+        }
+      };
 
       // Graphical editor callbacks
       $scope.onStateAdded = function (state) {
@@ -55,7 +81,7 @@ angular
         function (newStates) {
           if (newStates) {
             newStates.forEach((state) => {
-              const stateName = state.name || state.id;
+              const stateName = state.name || state.id || state;
               if ($scope.automata.acceptStates.includes(stateName)) {
                 $scope.acceptStateMap[stateName] = true;
               }
@@ -67,21 +93,24 @@ angular
 
       // Add state to list
       $scope.addState = function () {
-        if (
-          $scope.stateInput &&
-          !$scope.automata.states.includes($scope.stateInput)
-        ) {
-          $scope.automata.states.push($scope.stateInput);
+        const stateName = ($scope.stateInput || "").trim();
+        const exists = $scope.automata.states.some(
+          (s) => (s.name || s.id) === stateName,
+        );
+
+        if (stateName && !exists) {
+          $scope.automata.states.push({ id: stateName, name: stateName });
           $scope.stateInput = "";
-        } else if ($scope.automata.states.includes($scope.stateInput)) {
+        } else if (exists) {
           $scope.error = "State already exists";
         }
       };
 
       // Remove state
       $scope.removeState = function (state) {
+        const stateName = state.name || state.id || state;
         $scope.automata.states = $scope.automata.states.filter(
-          (s) => s !== state,
+          (s) => (s.name || s.id) !== stateName,
         );
       };
 
@@ -122,10 +151,24 @@ angular
           symbol: $scope.transitionSymbol,
         };
 
+        if ($scope.automata.type === "PDA") {
+          transition.stackSymbol = $scope.transitionStackSymbol || null;
+          transition.pushSymbol = $scope.transitionPushSymbol || null;
+        }
+
+        if ($scope.automata.type === "TURING") {
+          transition.writeSymbol = $scope.transitionWriteSymbol || null;
+          transition.move = $scope.transitionMove || "R";
+        }
+
         $scope.automata.transitions.push(transition);
         $scope.transitionFrom = "";
         $scope.transitionTo = "";
         $scope.transitionSymbol = "";
+        $scope.transitionStackSymbol = "";
+        $scope.transitionPushSymbol = "";
+        $scope.transitionWriteSymbol = "";
+        $scope.transitionMove = "R";
         $scope.error = null;
       };
 
@@ -136,12 +179,13 @@ angular
 
       // Add accept state
       $scope.toggleAcceptState = function (state) {
-        if ($scope.automata.acceptStates.includes(state)) {
+        const stateName = state.name || state.id || state;
+        if ($scope.automata.acceptStates.includes(stateName)) {
           $scope.automata.acceptStates = $scope.automata.acceptStates.filter(
-            (s) => s !== state,
+            (s) => s !== stateName,
           );
         } else {
-          $scope.automata.acceptStates.push(state);
+          $scope.automata.acceptStates.push(stateName);
         }
       };
 
@@ -183,6 +227,21 @@ angular
         // Prepare automata data for backend
         const dataToSave = angular.copy($scope.automata);
 
+        if (dataToSave.type === "PDA") {
+          const parsedStackAlphabet = String($scope.stackAlphabetInput || "")
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean);
+
+          dataToSave.stackAlphabet =
+            parsedStackAlphabet.length > 0 ? parsedStackAlphabet : ["Z"];
+          dataToSave.initialStackSymbol = dataToSave.initialStackSymbol || "Z";
+        }
+
+        if (dataToSave.type === "TURING") {
+          dataToSave.tape = dataToSave.tape || "_";
+        }
+
         AutomataService.createAutomata(dataToSave).then(
           function (response) {
             $scope.success = "Automata created successfully!";
@@ -196,6 +255,10 @@ angular
           },
         );
       };
+
+      //Expose submit handler for shared form
+      $scope.submitAutomata = $scope.saveAutomata;
+      $scope.submitLabel = "Save Automata";
 
       // Cancel
       $scope.cancel = function () {

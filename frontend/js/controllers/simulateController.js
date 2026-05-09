@@ -17,23 +17,32 @@ angular
       $scope.activeStep = null;
       let animationPromise = null;
 
-      // Load automata
-      AutomataService.getAutomataById($routeParams.id).then(
-        function (response) {
-          $scope.automata = response.data;
-          $scope.loading = false;
-          loadHistory();
-        },
-        function (error) {
-          $scope.error = "Failed to load automata: " + error.statusText;
-          $scope.loading = false;
-          console.error(error);
-        },
-      );
+      const loadAutomata = function () {
+        const request = $routeParams.shareId
+          ? AutomataService.getAutomataByShareId($routeParams.shareId)
+          : AutomataService.getAutomataById($routeParams.id);
+
+        request.then(
+          function (response) {
+            $scope.automata = response.data;
+            $scope.loading = false;
+            loadHistory();
+          },
+          function (error) {
+            $scope.error = "Failed to load automata: " + error.statusText;
+            $scope.loading = false;
+            console.error(error);
+          },
+        );
+      };
 
       // Load simulation history
       const loadHistory = function () {
-        AutomataService.getSimulationHistory($routeParams.id).then(
+        if (!$scope.automata || !$scope.automata._id) {
+          return;
+        }
+
+        AutomataService.getSimulationHistory($scope.automata._id).then(
           function (response) {
             $scope.history = response.data;
           },
@@ -58,7 +67,9 @@ angular
           return;
         }
 
-        AutomataService.simulateAutomata($routeParams.id, $scope.input).then(
+        const automataId = $scope.automata && $scope.automata._id;
+
+        AutomataService.simulateAutomata(automataId, $scope.input).then(
           function (response) {
             $scope.result = response.data;
             $scope.simulating = false;
@@ -160,7 +171,9 @@ angular
       // Get result message
       $scope.getResultMessage = function () {
         if (!$scope.result) return "";
-        return $scope.result.accepted ? "ACCEPTED ✓" : "REJECTED ✗";
+        return $scope.result.accepted ? "ACCEPTED" : "REJECTED";
       };
+
+      loadAutomata();
     },
   );

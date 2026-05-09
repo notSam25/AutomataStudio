@@ -31,9 +31,6 @@ app.use(express.urlencoded({ extended: true }));
 // Use CORS middleware to ensure CORS headers are set for all responses
 app.use(cors({ origin: "*" }));
 
-// Ensure preflight requests are handled
-app.options("*", cors());
-
 // Connect to MongoDB
 connectDB();
 

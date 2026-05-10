@@ -1,5 +1,18 @@
 const mongoose = require("mongoose");
 
+const stateSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    id: String,
+    x: Number,
+    y: Number,
+  },
+  { _id: false },
+);
+
 const transitionSchema = new mongoose.Schema(
   {
     from: {
@@ -52,7 +65,7 @@ const automataSchema = new mongoose.Schema(
       required: true,
     },
     states: {
-      type: [String],
+      type: [stateSchema],
       required: true,
     },
     alphabet: {

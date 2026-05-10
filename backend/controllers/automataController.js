@@ -1,26 +1,38 @@
 const Automata = require("../models/Automata");
 const crypto = require("crypto");
 
-const normalizeStateName = (state) => {
+const getStateName = (state) => {
   if (typeof state === "string") {
     return state;
   }
-
   if (state && typeof state === "object") {
     return state.name || state.id;
   }
-
   return null;
 };
 
 const normalizeAutomataPayload = (payload) => {
+  // Preserve state objects (with position data) instead of converting to strings
   const normalizedStates = (payload.states || [])
-    .map(normalizeStateName)
+    .map((state) => {
+      if (typeof state === "string") {
+        return { name: state, id: state };
+      }
+      if (state && typeof state === "object") {
+        return {
+          name: state.name || state.id,
+          id: state.id || state.name,
+          x: state.x || undefined,
+          y: state.y || undefined,
+        };
+      }
+      return null;
+    })
     .filter(Boolean);
 
   const normalizedTransitions = (payload.transitions || []).map((t) => ({
-    from: normalizeStateName(t.from) || t.from,
-    to: normalizeStateName(t.to) || t.to,
+    from: getStateName(t.from) || t.from,
+    to: getStateName(t.to) || t.to,
     symbol: t.symbol,
     writeSymbol: t.writeSymbol || null,
     move: t.move || null,
@@ -32,9 +44,9 @@ const normalizeAutomataPayload = (payload) => {
     ...payload,
     states: normalizedStates,
     transitions: normalizedTransitions,
-    initialState: normalizeStateName(payload.initialState) || payload.initialState,
+    initialState: getStateName(payload.initialState) || payload.initialState,
     acceptStates: (payload.acceptStates || [])
-      .map(normalizeStateName)
+      .map(getStateName)
       .filter(Boolean),
     stackAlphabet: Array.isArray(payload.stackAlphabet)
       ? payload.stackAlphabet.filter(Boolean)

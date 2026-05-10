@@ -84,10 +84,15 @@ angular
 
           syncEdgesFromModel();
 
+          // Check if any states have saved positions
+          const hasPositions = (scope.automata.states || []).some(
+            (s) => s.x !== undefined && s.x !== null && s.y !== undefined && s.y !== null,
+          );
+
           // Create network
           const options = {
             physics: {
-              enabled: true,
+              enabled: !hasPositions, // Only enable physics if no saved positions
               stabilization: { iterations: 200 },
               barnesHut: {
                 gravitationalConstant: -26000,
@@ -124,9 +129,11 @@ angular
           );
 
           //freeze layout after stabilization so manual dragging stays in place
-          network.once("stabilizationIterationsDone", function () {
-            network.setOptions({ physics: false });
-          });
+          if (!hasPositions) {
+            network.once("stabilizationIterationsDone", function () {
+              network.setOptions({ physics: false });
+            });
+          }
 
           // Explicitly set canvas size to match container
           const canvas = graphHost[0].querySelector("canvas");
@@ -154,9 +161,9 @@ angular
                     };
                   }
                 }
-              }, 300);
+              }, hasPositions ? 100 : 300);
             }
-          }, 500);
+          }, hasPositions ? 100 : 500);
         }
 
         function resetView() {
@@ -220,11 +227,22 @@ angular
 
           if (scope.automata && scope.automata.transitions) {
             scope.automata.transitions.forEach((transition) => {
+              // Resolve state names to node IDs
+              const fromState = scope.automata.states.find(
+                (s) => s.name === transition.from,
+              );
+              const toState = scope.automata.states.find(
+                (s) => s.name === transition.to,
+              );
+
+              const fromNodeId = fromState ? (fromState.id || fromState.name) : transition.from;
+              const toNodeId = toState ? (toState.id || toState.name) : transition.to;
+
               const edgeId = "edge-" + edgeCounter++;
               edges.add({
                 id: edgeId,
-                from: transition.from,
-                to: transition.to,
+                from: fromNodeId,
+                to: toNodeId,
                 symbol: transition.symbol,
                 writeSymbol: transition.writeSymbol || null,
                 move: transition.move || null,
@@ -287,6 +305,14 @@ angular
               mass: 2,
               title: stateId,
             };
+
+            // Preserve position data if available
+            if (state.x !== undefined && state.x !== null) {
+              nextNode.x = state.x;
+            }
+            if (state.y !== undefined && state.y !== null) {
+              nextNode.y = state.y;
+            }
 
             if (existingNode) {
               nodes.update(nextNode);
@@ -527,11 +553,22 @@ angular
             return;
           }
 
+          // Convert state IDs to state names for transition storage
+          const fromState = scope.automata.states.find(
+            (s) => (s.id || s.name) === fromStateId,
+          );
+          const toState = scope.automata.states.find(
+            (s) => (s.id || s.name) === toStateId,
+          );
+
+          const fromStateName = fromState ? fromState.name : fromStateId;
+          const toStateName = toState ? toState.name : toStateId;
+
           //check if transition already exists
           const existing = scope.automata.transitions.find(
             (t) =>
-              t.from === fromStateId &&
-              t.to === toStateId &&
+              t.from === fromStateName &&
+              t.to === toStateName &&
               t.symbol === symbol,
           );
 
@@ -541,8 +578,8 @@ angular
           }
 
           const newTransition = {
-            from: fromStateId,
-            to: toStateId,
+            from: fromStateName,
+            to: toStateName,
             symbol: symbol,
             writeSymbol: metadata && metadata.writeSymbol ? metadata.writeSymbol : null,
             move: metadata && metadata.move ? metadata.move : null,

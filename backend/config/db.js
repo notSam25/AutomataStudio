@@ -12,7 +12,12 @@ const maskCredentials = (uri) => {
 };
 
 const connectDB = async () => {
-  const mongoURI = process.env.MONGO_URI || "mongodb://mongo:27017/automata-studio";
+  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+  const mongoURI = process.env.MONGO_URI || (isProduction ? "" : "mongodb://mongo:27017/automata-studio");
+
+  if (!mongoURI) {
+    throw new Error("MONGO_URI is not set. Configure the Atlas connection string in Vercel environment variables.");
+  }
 
   if (mongoose.connection.readyState === 1) {
     return mongoose.connection;

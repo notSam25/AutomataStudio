@@ -32,8 +32,6 @@ const connectDB = async () => {
   // Use sensible timeouts so the process doesn't wait indefinitely
   const connectOptions = {
     // Keep production failures fast so Vercel surfaces the real error instead of timing out.
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverSelectionTimeoutMS: 4000,
     connectTimeoutMS: 4000,
   };

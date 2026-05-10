@@ -31,9 +31,17 @@ const connectDB = async () => {
 
   // Use sensible timeouts so the process doesn't wait indefinitely
   const connectOptions = {
-    // Keep production failures fast so Vercel surfaces the real error instead of timing out.
-    serverSelectionTimeoutMS: 4000,
-    connectTimeoutMS: 4000,
+    // serverSelectionTimeoutMS: Time to select a server (14s allows cloud latency + cold start)
+    // connectTimeoutMS: Time for initial TCP connection (10s)
+    // socketTimeoutMS: Time for individual socket operations (30s)
+    // These are longer because Vercel cold start + Atlas negotiation can take time
+    serverSelectionTimeoutMS: isProduction ? 14000 : 5000,
+    connectTimeoutMS: isProduction ? 10000 : 5000,
+    socketTimeoutMS: isProduction ? 30000 : 10000,
+    // Retry connection a few times with exponential backoff
+    retryWrites: true,
+    maxPoolSize: isProduction ? 1 : 10, // Vercel serverless: limit pool size
+    minPoolSize: 0, // Don't maintain idle connections
   };
 
   // Attach connection event listeners for better observability

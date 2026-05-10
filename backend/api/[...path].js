@@ -2,9 +2,13 @@ const connectDB = require("../config/db");
 const app = require("../app");
 const mongoose = require("mongoose");
 
+const connectDB = require("../config/db");
+const app = require("../app");
+const mongoose = require("mongoose");
+
 let readyPromise = null;
 
-const waitForDatabase = async (timeoutMs = 3000) => {
+const waitForDatabase = async (timeoutMs = 16000) => {
   if (mongoose.connection.readyState === 1) {
     return true;
   }

@@ -3,7 +3,7 @@ const automataController = require("../controllers/automataController");
 
 let readyPromise = null;
 
-const ensureDatabase = async (timeoutMs = 3000) => {
+const ensureDatabase = async (timeoutMs = 16000) => {
   if (!readyPromise) {
     readyPromise = connectDB();
   }

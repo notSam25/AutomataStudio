@@ -3,7 +3,7 @@ const connectDB = require("../config/db");
 
 let readyPromise = null;
 
-const waitForDatabase = async (timeoutMs = 2000) => {
+const waitForDatabase = async (timeoutMs = 16000) => {
   if (mongoose.connection.readyState === 1) {
     return "connected";
   }

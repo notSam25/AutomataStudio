@@ -62,3 +62,15 @@ const server = http.createServer(app);
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Global error handlers to capture unexpected crashes and log them
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err && err.stack ? err.stack : err);
+  // give log a moment to flush then exit
+  setTimeout(() => process.exit(1), 1000);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason && reason.stack ? reason.stack : reason);
+  setTimeout(() => process.exit(1), 1000);
+});

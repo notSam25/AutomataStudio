@@ -111,6 +111,7 @@ exports.createAutomata = async (req, res) => {
     const savedAutomata = await automata.save();
     res.status(201).json(savedAutomata);
   } catch (error) {
+    console.error("Error in createAutomata:", error && error.stack ? error.stack : error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -129,6 +130,7 @@ exports.getAllAutomata = async (req, res) => {
 
     res.status(200).json(automata);
   } catch (error) {
+    console.error("Error in getAllAutomata:", error && error.stack ? error.stack : error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -145,6 +147,7 @@ exports.getAutomataById = async (req, res) => {
 
     res.status(200).json(automata);
   } catch (error) {
+    console.error("Error in getAutomataById:", error && error.stack ? error.stack : error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -171,6 +174,7 @@ exports.updateAutomata = async (req, res) => {
 
     res.status(200).json(automata);
   } catch (error) {
+    console.error("Error in updateAutomata:", error && error.stack ? error.stack : error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -194,6 +198,7 @@ exports.deleteAutomata = async (req, res) => {
       .status(200)
       .json({ message: "Automata deleted successfully", automata });
   } catch (error) {
+    console.error("Error in deleteAutomata:", error && error.stack ? error.stack : error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -217,6 +222,7 @@ exports.createShareLink = async (req, res) => {
       shareUrl: `/#!/shared/${shareId}`,
     });
   } catch (error) {
+    console.error("Error in createShareLink:", error && error.stack ? error.stack : error);
     return res.status(500).json({ error: error.message });
   }
 };
@@ -236,6 +242,7 @@ exports.revokeShareLink = async (req, res) => {
 
     return res.status(200).json({ message: "Sharing disabled" });
   } catch (error) {
+    console.error("Error in revokeShareLink:", error && error.stack ? error.stack : error);
     return res.status(500).json({ error: error.message });
   }
 };
@@ -251,6 +258,7 @@ exports.getAutomataByShareId = async (req, res) => {
 
     return res.status(200).json(automata);
   } catch (error) {
+    console.error("Error in getAutomataByShareId:", error && error.stack ? error.stack : error);
     return res.status(500).json({ error: error.message });
   }
 };
@@ -269,6 +277,7 @@ exports.exportAutomata = async (req, res) => {
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     return res.status(200).send(JSON.stringify(automata, null, 2));
   } catch (error) {
+    console.error("Error in exportAutomata:", error && error.stack ? error.stack : error);
     return res.status(500).json({ error: error.message });
   }
 };

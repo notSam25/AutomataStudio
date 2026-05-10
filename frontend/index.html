@@ -25,6 +25,28 @@
     <!-- Runtime config -->
     <script src="./config.js"></script>
 
+    <script>
+      (function () {
+        try {
+          if (window.__API_WARMUP_PROMISE__) {
+            return;
+          }
+
+          var apiBase = window.__API_BASE__ || "https://automata-studio-iota.vercel.app/api";
+          window.__API_WARMUP_PROMISE__ = fetch(apiBase + "/diagnostics", {
+            method: "GET",
+            cache: "no-store",
+            credentials: "omit",
+            mode: "cors",
+          }).catch(function () {
+            return null;
+          });
+        } catch (error) {
+          window.__API_WARMUP_PROMISE__ = Promise.resolve(null);
+        }
+      })();
+    </script>
+
     <!-- App Scripts -->
     <script src="./js/app.js"></script>
     <script src="./js/services/authService.js"></script>

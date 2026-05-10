@@ -5,6 +5,10 @@ let readyPromise = null;
 
 module.exports = async (req, res) => {
   try {
+    if (req && typeof req.url === "string" && !req.url.startsWith("/api")) {
+      req.url = `/api${req.url.startsWith("/") ? "" : "/"}${req.url}`;
+    }
+
     if (!readyPromise) {
       readyPromise = connectDB();
     }

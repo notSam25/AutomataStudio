@@ -1,16 +1,60 @@
 const mongoose = require("mongoose");
 
-const connectDB = async () => {
+let cachedConnectionPromise = null;
+
+const maskCredentials = (uri) => {
   try {
-    const mongoURI =
-      process.env.MONGO_URI || "mongodb://mongo:27017/automata-studio";
+    // simple masking: hide user:pass@ segment
+    return uri.replace(/:\/\/.*@/, '://***:***@');
+  } catch (e) {
+    return uri;
+  }
+};
 
-    await mongoose.connect(mongoURI);
+const connectDB = async () => {
+  const mongoURI = process.env.MONGO_URI || "mongodb://mongo:27017/automata-studio";
 
-    console.log("MongoDB connected successfully");
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+
+  if (cachedConnectionPromise) {
+    return cachedConnectionPromise;
+  }
+
+  console.log("Attempting MongoDB connection to:", maskCredentials(mongoURI));
+
+  // Use sensible timeouts so the process doesn't wait indefinitely
+  const connectOptions = {
+    // Mongoose 6+ uses these by default, but we include them for clarity
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000,
+  };
+
+  // Attach connection event listeners for better observability
+  mongoose.connection.on("connected", () => {
+    console.log("MongoDB connection established");
+  });
+
+  mongoose.connection.on("error", (err) => {
+    console.error("MongoDB connection error event:", err && err.stack ? err.stack : err);
+  });
+
+  mongoose.connection.on("disconnected", () => {
+    console.warn("MongoDB disconnected");
+  });
+
+  // Attempt connection and let caller handle failures
+  cachedConnectionPromise = mongoose.connect(mongoURI, connectOptions);
+
+  try {
+    await cachedConnectionPromise;
+    return mongoose.connection;
   } catch (error) {
-    console.error("MongoDB connection error:", error.message);
-    process.exit(1);
+    cachedConnectionPromise = null;
+    throw error;
   }
 };
 

@@ -31,11 +31,11 @@ const connectDB = async () => {
 
   // Use sensible timeouts so the process doesn't wait indefinitely
   const connectOptions = {
-    // Mongoose 6+ uses these by default, but we include them for clarity
+    // Keep production failures fast so Vercel surfaces the real error instead of timing out.
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 10000,
-    connectTimeoutMS: 10000,
+    serverSelectionTimeoutMS: 4000,
+    connectTimeoutMS: 4000,
   };
 
   // Attach connection event listeners for better observability

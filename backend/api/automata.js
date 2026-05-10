@@ -1,20 +1,5 @@
-const connectDB = require("../config/db");
+const { ensureConnection } = require("../config/sharedConnection");
 const automataController = require("../controllers/automataController");
-
-let readyPromise = null;
-
-const ensureDatabase = async (timeoutMs = 16000) => {
-  if (!readyPromise) {
-    readyPromise = connectDB();
-  }
-
-  await Promise.race([
-    readyPromise,
-    new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("MongoDB connection did not become ready within the timeout window")), timeoutMs);
-    }),
-  ]);
-};
 
 module.exports = async (req, res) => {
   try {
@@ -22,7 +7,7 @@ module.exports = async (req, res) => {
       return res.status(204).end();
     }
 
-    await ensureDatabase();
+    await ensureConnection();
 
     if (req.method === "GET") {
       return automataController.getAllAutomata(req, res);

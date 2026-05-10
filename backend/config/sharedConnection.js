@@ -1,48 +1,50 @@
 const connectDB = require("./db");
 const mongoose = require("mongoose");
 
-// Shared across all Vercel function invocations in the same container
-let connectionPromise = null;
+// Start connection immediately on module load (during cold start)
+// This gives the connection time to establish before requests arrive
+let connectionPromise = connectDB().catch((err) => {
+  console.error("Initial connection attempt failed on module load, will retry on next request:", err.message);
+  // Don't throw - allow the module to load
+});
 
 /**
  * Ensure database connection is established.
- * This is called by all API handlers to use a shared, cached connection.
- * Timeouts are handled gracefully without breaking the underlying connection attempt.
+ * Called by all API handlers. Connection starts immediately on module load,
+ * so this usually just waits for an already-in-progress connection.
  */
-const ensureConnection = async (timeoutMs = 20000) => {
+const ensureConnection = async (timeoutMs = 8000) => {
   // If already connected, return immediately
   if (mongoose.connection.readyState === 1) {
     return true;
   }
 
-  // If no connection attempt in progress, start one
+  // If no promise exists (module just loaded or previous attempt failed), start a new attempt
   if (!connectionPromise) {
     connectionPromise = connectDB().catch((err) => {
-      // Clear cache on error so next request can retry
+      // Clear on error so next request retries
       connectionPromise = null;
       throw err;
     });
   }
 
-  // Wait for connection with timeout
-  // Note: if timeout fires but connection succeeds later, next request will use the ready connection
+  // Wait for connection with timeout (shorter since it should already be in progress)
   try {
     await Promise.race([
       connectionPromise,
       new Promise((_, reject) => {
         setTimeout(
-          () => reject(new Error("Connection initialization timeout - will retry on next request")),
+          () => reject(new Error("Connection timeout - MongoDB still initializing")),
           timeoutMs,
         );
       }),
     ]);
-  } catch (timeoutErr) {
-    // If timeout occurred but connection is actually ready, allow it
+  } catch (err) {
+    // If already connected despite the error, allow it
     if (mongoose.connection.readyState === 1) {
       return true;
     }
-    // Otherwise throw the timeout error
-    throw timeoutErr;
+    throw err;
   }
 
   return mongoose.connection.readyState === 1;

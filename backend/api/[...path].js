@@ -3,7 +3,7 @@ const app = require("../app");
 const mongoose = require("mongoose");
 
 const { ensureConnection } = require("../config/sharedConnection");
-const app = require("../app");
+// Removed duplicate import of app
 
 module.exports = async (req, res) => {
   try {

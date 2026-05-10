@@ -1,6 +1,6 @@
 angular
   .module("automataApp")
-  .factory("AutomataService", function ($http, AuthService) {
+  .factory("AutomataService", function ($http, $q, AuthService) {
     const API_BASE =
       window && window.__API_BASE__
         ? window.__API_BASE__
@@ -8,10 +8,10 @@ angular
 
     const waitForWarmup = function () {
       if (window && window.__API_WARMUP_PROMISE__) {
-        return window.__API_WARMUP_PROMISE__;
+        return $q.when(window.__API_WARMUP_PROMISE__);
       }
 
-      return Promise.resolve();
+      return $q.when();
     };
 
     const requestAfterWarmup = function (requestFactory) {
